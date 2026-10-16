@@ -1,0 +1,130 @@
+import * as vscode from 'vscode';
+import { getFileEditorAssociationGlobs } from './resourceMatching';
+import { areAgentReviewTextsEquivalent } from './reviewState';
+
+const REVIEW_FILE_OVERRIDE_STATE_KEY = 'copilotReviewNativeFileOverrides';
+
+type AgentReviewOverrideDeps = {
+  getComparableResourceKey: (uri: vscode.Uri) => string | undefined;
+  getOpenTextDocumentForComparableKey: (targetKey: string) => vscode.TextDocument | undefined;
+  isLikelyAgentReviewUri: (uri: vscode.Uri) => boolean;
+};
+
+export class AgentReviewOverrideController {
+  private syncTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly pinnedOverrideKeys = new Set<string>();
+
+  constructor(
+    private readonly context: vscode.ExtensionContext,
+    private readonly deps: AgentReviewOverrideDeps
+  ) {}
+
+  pinFile(fileUri: vscode.Uri): void {
+    for (const key of this.getOverridePatterns(fileUri)) {
+      this.pinnedOverrideKeys.add(key);
+    }
+  }
+
+  unpinFile(fileUri: vscode.Uri): void {
+    for (const key of this.getOverridePatterns(fileUri)) {
+      this.pinnedOverrideKeys.delete(key);
+    }
+  }
+
+  scheduleSync(delayMs = 50): void {
+    if (this.syncTimer) {
+      clearTimeout(this.syncTimer);
+    }
+
+    this.syncTimer = setTimeout(() => {
+      this.syncTimer = null;
+      void this.syncNow();
+    }, delayMs);
+  }
+
+  async syncNow(): Promise<void> {
+    const config = vscode.workspace.getConfiguration('workbench');
+    const current = {
+      ...(config.get<Record<string, string>>('editorAssociations') || {})
+    };
+    const previousKeys = new Set(this.context.workspaceState.get<string[]>(REVIEW_FILE_OVERRIDE_STATE_KEY, []));
+    const nextKeys = this.collectOverrideKeys();
+    const changed = this.applyOverrideAssociations(current, previousKeys, nextKeys);
+
+    if (changed) {
+      await config.update('editorAssociations', current, vscode.ConfigurationTarget.Global);
+    }
+
+    const previousList = this.getSortedValues(previousKeys);
+    const nextList = this.getSortedValues(nextKeys);
+    if (this.haveSameValues(previousList, nextList)) {
+      return;
+    }
+
+    await this.context.workspaceState.update(REVIEW_FILE_OVERRIDE_STATE_KEY, nextList);
+  }
+
+  private collectOverrideKeys(): Set<string> {
+    const keys = new Set<string>(this.pinnedOverrideKeys);
+
+    for (const document of vscode.workspace.textDocuments) {
+      if (!this.deps.isLikelyAgentReviewUri(document.uri)) {
+        continue;
+      }
+
+      const targetKey = this.deps.getComparableResourceKey(document.uri);
+      if (!targetKey) {
+        continue;
+      }
+
+      const openTargetDocument = this.deps.getOpenTextDocumentForComparableKey(targetKey);
+      if (areAgentReviewTextsEquivalent(openTargetDocument?.getText(), document.getText())) {
+        continue;
+      }
+
+      for (const key of this.getOverridePatterns(vscode.Uri.file(targetKey))) {
+        keys.add(key);
+      }
+    }
+
+    return keys;
+  }
+
+  private getOverridePatterns(fileUri: vscode.Uri): string[] {
+    return getFileEditorAssociationGlobs(fileUri);
+  }
+
+  private applyOverrideAssociations(
+    associations: Record<string, string>,
+    previousKeys: ReadonlySet<string>,
+    nextKeys: ReadonlySet<string>
+  ): boolean {
+    let changed = false;
+
+    for (const key of previousKeys) {
+      if (nextKeys.has(key) || !(key in associations)) {
+        continue;
+      }
+      delete associations[key];
+      changed = true;
+    }
+
+    for (const key of nextKeys) {
+      if (associations[key] === 'default') {
+        continue;
+      }
+      associations[key] = 'default';
+      changed = true;
+    }
+
+    return changed;
+  }
+
+  private getSortedValues(values: ReadonlySet<string>): string[] {
+    return Array.from(values).sort();
+  }
+
+  private haveSameValues(left: readonly string[], right: readonly string[]): boolean {
+    return left.length === right.length && left.every((value, index) => value === right[index]);
+  }
+}

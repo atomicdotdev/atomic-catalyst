@@ -1,0 +1,899 @@
+{
+  "name": "catalyst-intent-editor",
+  "displayName": "Catalyst Intent Editor (MEO Prototype)",
+  "description": "Source-first Atomic intent editing, based on MEO. Atomic CLI owns validation and attestations.",
+  "version": "0.2.10",
+  "publisher": "catalyst-local",
+  "license": "MIT",
+  "private": true,
+  "icon": "logo.png",
+  "engines": {
+    "vscode": "^1.97.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Formatters",
+    "Other"
+  ],
+  "keywords": [
+    "markdown",
+    "editor",
+    "live-edit",
+    "wysiwyg",
+    "markdown-editor",
+    "markdown-preview"
+  ],
+  "main": "./dist/extension.js",
+  "extensionKind": ["workspace"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Atomic version control is disabled until the workspace is trusted."
+    },
+    "virtualWorkspaces": {
+      "supported": "limited",
+      "description": "Atomic version control requires a local filesystem and a matching native addon."
+    }
+  },
+  "contributes": {
+    "views": {
+      "scm": [
+        {
+          "id": "catalystAtomic.repository",
+          "name": "Atomic History & Views"
+        }
+      ]
+    },
+    "languages": [
+      {
+        "id": "markdown",
+        "extensions": [
+          ".mdx",
+          ".mdc"
+        ]
+      }
+    ],
+    "commands": [
+      { "command": "catalystAtomic.openGraph", "title": "Atomic: Inspect View Changes", "icon": "$(git-commit)" },
+      { "command": "catalystAtomic.refresh", "title": "Atomic: Refresh Version Control", "icon": "$(refresh)" },
+      { "command": "catalystAtomic.record", "title": "Atomic: Record Tracked Changes", "icon": "$(check)" },
+      { "command": "catalystAtomic.add", "title": "Atomic: Add File", "icon": "$(add)" },
+      { "command": "catalystAtomic.createView", "title": "Atomic: Create View", "icon": "$(add)" },
+      { "command": "catalystAtomic.switchView", "title": "Atomic: Switch View", "icon": "$(versions)" },
+      { "command": "catalystAtomic.deleteView", "title": "Atomic: Delete View", "icon": "$(trash)" },
+      {
+        "command": "catalystIntent.open",
+        "title": "Atomic: Open Intent as Ticket",
+        "icon": "$(book)"
+      },
+      {
+        "command": "catalystIntent.setDefaultEditor",
+        "title": "Catalyst Intent Editor: Set as Default",
+        "icon": "$(check)"
+      },
+      {
+        "command": "catalystIntent.resetThemeToDefault",
+        "title": "Catalyst Intent Editor: Reset Theme to Default",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "catalystIntent.selectTheme",
+        "title": "Catalyst Intent Editor: Select Theme"
+      },
+      {
+        "command": "catalystIntent.importTheme",
+        "title": "Catalyst Intent Editor: Import Theme JSON"
+      },
+      {
+        "command": "catalystIntent.exportTheme",
+        "title": "Catalyst Intent Editor: Export Theme JSON"
+      },
+      {
+        "command": "catalystIntent.deleteImportedTheme",
+        "title": "Catalyst Intent Editor: Delete Imported Theme"
+      },
+      {
+        "command": "catalystIntent.toggleMode",
+        "title": "Catalyst Intent Editor: Toggle Ticket/Source Mode",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "catalystIntent.toggleReadOnly",
+        "title": "Catalyst Intent Editor: Toggle Read Only",
+        "icon": "$(book)"
+      },
+      {
+        "command": "catalystIntent.exportHtml",
+        "title": "Catalyst Intent Editor: Export as HTML",
+        "icon": "$(export)"
+      },
+      {
+        "command": "catalystIntent.exportPdf",
+        "title": "Catalyst Intent Editor: Export as PDF",
+        "icon": "$(file-pdf)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "catalystIntent.toggleMode",
+        "key": "alt+shift+m",
+        "when": "catalystIntent.activeEditor"
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "catalystIntent.editor",
+        "displayName": "Catalyst Intent Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.md"
+          },
+          {
+            "filenamePattern": "*.markdown"
+          },
+          {
+            "filenamePattern": "*.mdx"
+          },
+          {
+            "filenamePattern": "*.mdc"
+          }
+        ],
+        "priority": "option"
+      },
+      {
+        "viewType": "catalystIntent.ticket",
+        "displayName": "Atomic Intent Ticket",
+        "selector": [
+          {
+            "filenamePattern": "**/intent.md"
+          },
+          {
+            "filenamePattern": "*.intent.md"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        { "command": "catalystAtomic.refresh", "when": "view == catalystAtomic.repository", "group": "navigation" }
+      ],
+      "view/item/context": [
+        { "command": "catalystAtomic.openGraph", "when": "view == catalystAtomic.repository && viewItem == atomicRepository", "group": "navigation" },
+        { "command": "catalystAtomic.createView", "when": "view == catalystAtomic.repository && viewItem == atomicRepository", "group": "atomic" },
+        { "command": "catalystAtomic.switchView", "when": "view == catalystAtomic.repository && viewItem == atomicRepository", "group": "atomic" },
+        { "command": "catalystAtomic.deleteView", "when": "view == catalystAtomic.repository && viewItem == atomicRepository", "group": "atomic" }
+      ],
+      "scm/title": [
+        { "command": "catalystAtomic.record", "when": "scmProvider == atomic", "group": "navigation" },
+        { "command": "catalystAtomic.refresh", "when": "scmProvider == atomic", "group": "navigation" }
+      ],
+      "scm/resourceState/context": [
+        { "command": "catalystAtomic.add", "when": "scmProvider == atomic && scmResourceState == atomicUntracked", "group": "inline" }
+      ],
+      "commandPalette": [
+        { "command": "catalystAtomic.add", "when": "false" }
+      ],
+      "explorer/context": [
+        {
+          "command": "catalystIntent.open",
+          "when": "resourceFilename =~ /\\.(md|markdown|mdx|mdc)$/",
+          "group": "navigation"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "catalystIntent.open",
+          "when": "resourceFilename =~ /\\.(md|markdown|mdx|mdc)$/",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Catalyst Intent Editor",
+      "properties": {
+        "catalystIntent.useAsDefault": {
+          "type": "boolean",
+          "default": false,
+          "order": 1,
+          "description": "Use Markdown Editor Optimized as the default editor for Markdown files"
+        },
+        "catalystIntent.outline.position": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right"
+          ],
+          "enumDescriptions": [
+            "Show the document outline on the left side of the editor.",
+            "Show the document outline on the right side of the editor."
+          ],
+          "default": "right",
+          "order": 2,
+          "description": "Position of the contents outline sidebar."
+        },
+        "catalystIntent.readOnly": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "order": 3,
+          "description": "Make all Markdown Editor Optimized documents read-only in Live and Source. Remembered across editor sessions and workspaces."
+        },
+        "catalystIntent.contentMaxWidth.visible": {
+          "type": "boolean",
+          "default": false,
+          "order": 3,
+          "description": "Constrain the editor content to a centered 800px column."
+        },
+        "catalystIntent.lineNumbers.visible": {
+          "type": "boolean",
+          "default": true,
+          "order": 4,
+          "description": "Show line numbers."
+        },
+        "catalystIntent.gitChanges.visible": {
+          "type": "boolean",
+          "default": true,
+          "order": 5,
+          "description": "Show Git change indicators in the editor."
+        },
+        "catalystIntent.gitChanges.lineHighlights": {
+          "type": "boolean",
+          "default": true,
+          "order": 6,
+          "description": "Show subtle line coloring for modified lines in Source mode."
+        },
+        "catalystIntent.spellCheck.enabled": {
+          "type": "boolean",
+          "default": true,
+          "order": 6,
+          "description": "Show built-in spelling diagnostics in Markdown Editor Optimized when no external spell checker diagnostics are available."
+        },
+        "catalystIntent.vimMode.enabled": {
+          "type": "boolean",
+          "default": false,
+          "order": 6,
+          "description": "Legacy Vim keybinding override.",
+          "deprecationMessage": "Use catalystIntent.vimMode.behavior instead.",
+          "markdownDeprecationMessage": "Use `catalystIntent.vimMode.behavior` instead."
+        },
+        "catalystIntent.vimMode.behavior": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "enabled",
+            "disabled"
+          ],
+          "enumDescriptions": [
+            "Enable Vim emulation automatically when VSCodeVim (vscodevim.vim) is installed and enabled, or when VSCode Neovim (asvetliakov.vscode-neovim) is installed.",
+            "Always enable Vim emulation in Markdown Editor Optimized.",
+            "Always disable Vim keybindings in Markdown Editor Optimized."
+          ],
+          "default": "auto",
+          "order": 6,
+          "description": "Controls Vim emulation in Source and Live mode."
+        },
+        "catalystIntent.codeBlocks.useVscodeTheme": {
+          "type": "boolean",
+          "default": false,
+          "order": 7,
+          "description": "Highlight fenced code blocks using your active VS Code color theme."
+        },
+        "catalystIntent.rememberPosition.lines": {
+          "type": "number",
+          "default": 100,
+          "minimum": 0,
+          "order": 7,
+          "description": "Markdown files with at least this many lines will remember the last viewed line and restore the scroll position when opened."
+        },
+        "catalystIntent.export.browserPath": {
+          "type": "string",
+          "default": "",
+          "order": 7,
+          "description": "Optional path to a Chrome/Edge executable used for browser-based export rendering (PDF and HTML finalize). Leave empty to auto-detect."
+        },
+        "catalystIntent.export.pdf.browserPath": {
+          "type": "string",
+          "default": "",
+          "order": 7,
+          "description": "Deprecated: use catalystIntent.export.browserPath.",
+          "deprecationMessage": "Use catalystIntent.export.browserPath instead.",
+          "markdownDeprecationMessage": "Use `catalystIntent.export.browserPath` instead."
+        },
+        "catalystIntent.export.html.imageMode": {
+          "type": "string",
+          "enum": [
+            "embedded",
+            "linked"
+          ],
+          "enumDescriptions": [
+            "Embed local image files in exported HTML.",
+            "Keep local image links as relative paths in exported HTML."
+          ],
+          "default": "embedded",
+          "order": 8,
+          "description": "How local images are handled during HTML export."
+        },
+        "catalystIntent.imageFolder": {
+          "type": "string",
+          "default": "assets",
+          "order": 9,
+          "description": "Folder name to save pasted images (relative to workspace root)."
+        },
+        "catalystIntent.keymap": {
+          "type": "array",
+          "default": [],
+          "order": 10,
+          "markdownDescription": "Remap editor shortcuts to supported commands. Keys use CodeMirror syntax, such as `Mod-Shift-f`; `Mod` is Cmd on macOS and Ctrl elsewhere. Use `passthrough` to let VS Code handle a key.",
+          "items": {
+            "type": "object",
+            "required": [
+              "key",
+              "command"
+            ],
+            "properties": {
+              "key": {
+                "type": "string",
+                "description": "Key chord, e.g. alt+up or Mod-Shift-f."
+              },
+              "command": {
+                "type": "string",
+                "description": "Whitelisted command name, or passthrough."
+              }
+            }
+          }
+        },
+        "catalystIntent.theme": {
+          "type": "object",
+          "default": {
+            "id": "one-monokai",
+            "name": "One Monokai",
+            "backgroundColor": "var(--vscode-editor-background)",
+            "colors": {
+              "base01": "var(--vscode-editor-foreground)",
+              "base02": "#676f7d",
+              "base03": "#3e444d",
+              "base04": "#e06c75",
+              "base05": "#61afef",
+              "base06": "#66d9ef",
+              "base07": "#e5c07b",
+              "base08": "#c678dd",
+              "base09": "#98c379"
+            },
+            "syntaxTokens": {},
+            "fonts": {
+              "liveFont": "",
+              "sourceFont": "",
+              "liveFontWeight": "",
+              "sourceFontWeight": "",
+              "liveFontSize": null,
+              "sourceFontSize": null,
+              "h1FontSize": 1.6,
+              "h2FontSize": 1.5,
+              "h3FontSize": 1.3,
+              "h4FontSize": 1.2,
+              "h5FontSize": 1.1,
+              "h6FontSize": 1,
+              "h1FontWeight": "600",
+              "h2FontWeight": "600",
+              "h3FontWeight": "600",
+              "h4FontWeight": "600",
+              "h5FontWeight": "600",
+              "h6FontWeight": "600",
+              "liveLineHeight": 1.5,
+              "sourceLineHeight": 1.5
+            },
+            "activeLineBackground": ""
+          },
+          "defaultSnippets": [
+            {
+              "label": "One Monokai theme payload",
+              "description": "Insert the full theme object with sensible defaults.",
+              "body": "{\n\t\"id\": \"one-monokai\",\n\t\"name\": \"One Monokai\",\n\t\"backgroundColor\": \"var(--vscode-editor-background)\",\n\t\"activeLineBackground\": \"\",\n\t\"colors\": {\n\t\t\"base01\": \"var(--vscode-editor-foreground)\",\n\t\t\"base02\": \"#676f7d\",\n\t\t\"base03\": \"#3e444d\",\n\t\t\"base04\": \"#e06c75\",\n\t\t\"base05\": \"#61afef\",\n\t\t\"base06\": \"#66d9ef\",\n\t\t\"base07\": \"#e5c07b\",\n\t\t\"base08\": \"#c678dd\",\n\t\t\"base09\": \"#98c379\"\n\t},\n\t\"syntaxTokens\": {},\n\t\"fonts\": {\n\t\t\"liveFont\": \"\",\n\t\t\"sourceFont\": \"\",\n\t\t\"liveFontWeight\": \"\",\n\t\t\"sourceFontWeight\": \"\",\n\t\t\"liveFontSize\": null,\n\t\t\"sourceFontSize\": null,\n\t\t\"h1FontSize\": 1.6,\n\t\t\"h2FontSize\": 1.5,\n\t\t\"h3FontSize\": 1.3,\n\t\t\"h4FontSize\": 1.2,\n\t\t\"h5FontSize\": 1.1,\n\t\t\"h6FontSize\": 1,\n\t\t\"h1FontWeight\": \"600\",\n\t\t\"h2FontWeight\": \"600\",\n\t\t\"h3FontWeight\": \"600\",\n\t\t\"h4FontWeight\": \"600\",\n\t\t\"h5FontWeight\": \"600\",\n\t\t\"h6FontWeight\": \"600\",\n\t\t\"liveLineHeight\": 1.5,\n\t\t\"sourceLineHeight\": 1.5\n\t}\n}"
+            }
+          ],
+          "description": "Theme payload containing the editor background, base palette colors, optional token overrides, and font settings.",
+          "markdownDescription": "[Select Theme](command:catalystIntent.selectTheme) | [Import Theme](command:catalystIntent.importTheme) | [Export Theme](command:catalystIntent.exportTheme) | [Delete Imported Theme](command:catalystIntent.deleteImportedTheme) | [Reset Theme to Default](command:catalystIntent.resetThemeToDefault)",
+          "properties": {
+            "id": {
+              "type": "string",
+              "default": "one-monokai",
+              "description": "Unique theme identifier."
+            },
+            "name": {
+              "type": "string",
+              "default": "One Monokai (default)",
+              "description": "Display name for the theme."
+            },
+            "backgroundColor": {
+              "type": "string",
+              "format": "color",
+              "default": "var(--vscode-editor-background)",
+              "description": "Editor document background color (hex/rgb/hsl/var)."
+            },
+            "colors": {
+              "type": "object",
+              "default": {},
+              "properties": {
+                "base01": {
+                  "type": "string",
+                  "description": "Primary foreground color (hex/rgb/hsl/var).",
+                  "default": "var(--vscode-editor-foreground)"
+                },
+                "base02": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "base03": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "base04": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "base05": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "base06": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "base07": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "base08": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "base09": {
+                  "type": "string",
+                  "format": "color"
+                }
+              },
+              "required": [
+                "base02",
+                "base03",
+                "base04",
+                "base05",
+                "base06",
+                "base07",
+                "base08",
+                "base09"
+              ],
+              "additionalProperties": false
+            },
+            "syntaxTokens": {
+              "type": "object",
+              "default": {},
+              "properties": {
+                "keyword": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "identifier": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "macroName": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "variableName": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "propertyName": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "typeName": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "className": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "namespace": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "operator": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "operatorKeyword": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "punctuation": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "functionName": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "labelName": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "definitionFunction": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "definedVariable": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "number": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "changed": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "annotation": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "modifier": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "self": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "color": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "constant": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "atom": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "bool": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "specialVariable": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "specialString": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "regexp": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "string": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "typeDefinition": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "meta": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "comment": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "tagName": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "attributeName": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "invalid": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "deleted": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "monospace": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "heading": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "emphasis": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "strong": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "strikethrough": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "quote": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "contentSeparator": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "link": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "color"
+                },
+                "processingInstruction": {
+                  "type": "string",
+                  "format": "color"
+                }
+              },
+              "additionalProperties": false
+            },
+            "fonts": {
+              "type": "object",
+              "default": {},
+              "properties": {
+                "liveFont": {
+                  "type": "string",
+                  "default": ""
+                },
+                "sourceFont": {
+                  "type": "string",
+                  "default": ""
+                },
+                "liveFontWeight": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Live mode font weight override. Leave empty to use VS Code editor font weight."
+                },
+                "sourceFontWeight": {
+                  "type": "string",
+                  "default": "",
+                  "description": "Source mode font weight override. Leave empty to use VS Code editor font weight."
+                },
+                "liveFontSize": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "sourceFontSize": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "default": null
+                },
+                "h1FontSize": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 3,
+                  "default": 1.6
+                },
+                "h2FontSize": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 3,
+                  "default": 1.5
+                },
+                "h3FontSize": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 3,
+                  "default": 1.3
+                },
+                "h4FontSize": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 3,
+                  "default": 1.2
+                },
+                "h5FontSize": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 3,
+                  "default": 1.1
+                },
+                "h6FontSize": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "maximum": 3,
+                  "default": 1
+                },
+                "h1FontWeight": {
+                  "type": "string",
+                  "default": "600",
+                  "description": "Heading 1 font weight override."
+                },
+                "h2FontWeight": {
+                  "type": "string",
+                  "default": "600",
+                  "description": "Heading 2 font weight override."
+                },
+                "h3FontWeight": {
+                  "type": "string",
+                  "default": "600",
+                  "description": "Heading 3 font weight override."
+                },
+                "h4FontWeight": {
+                  "type": "string",
+                  "default": "600",
+                  "description": "Heading 4 font weight override."
+                },
+                "h5FontWeight": {
+                  "type": "string",
+                  "default": "600",
+                  "description": "Heading 5 font weight override."
+                },
+                "h6FontWeight": {
+                  "type": "string",
+                  "default": "600",
+                  "description": "Heading 6 font weight override."
+                },
+                "liveLineHeight": {
+                  "type": "number",
+                  "default": 1.5,
+                  "minimum": 1,
+                  "maximum": 3
+                },
+                "sourceLineHeight": {
+                  "type": "number",
+                  "default": 1.5,
+                  "minimum": 1,
+                  "maximum": 3
+                }
+              },
+              "required": [
+                "liveFont",
+                "sourceFont",
+                "liveFontSize",
+                "sourceFontSize",
+                "liveLineHeight",
+                "sourceLineHeight"
+              ],
+              "additionalProperties": false
+            },
+            "activeLineBackground": {
+              "type": "string",
+              "default": "",
+              "description": "Active-line background in Live and Source. Empty uses the default color; accepts theme colors or transparent. Read Only hides the highlight."
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "colors",
+            "syntaxTokens",
+            "fonts"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "scripts": {
+    "install:all": "npm ci",
+    "test": "bun test scripts/",
+    "test:atomic": "bun test scripts/atomicIntent.test.mjs scripts/atomicIntentView.test.mjs scripts/atomicSourceControl.test.mjs scripts/atomicErrors.test.mjs scripts/atomicEvidence.test.mjs scripts/atomicDraftView.test.mjs scripts/atomicChangeMetadata.test.mjs scripts/atomicBlastRadius.test.mjs scripts/atomicFileDiff.test.mjs scripts/atomicPlanContext.test.mjs",
+    "test:atomic:graph": "bun run build:extension:graph && bun scripts/atomicViewHostSmoke.mjs && bun scripts/atomicDiffHostSmoke.mjs && bun scripts/atomicGraphSmoke.mjs",
+    "test:atomic:native": "bun run build:extension:atomic && node scripts/atomicNativeSmoke.mjs",
+    "test:core": "bun test scripts/documentLifecycle.test.mjs",
+    "preview": "bun scripts/preview.mjs",
+    "test:browser": "bun scripts/browserSmoke.mjs",
+    "package:vsix": "bun run build && mkdir -p releases && vsce package --no-dependencies --allow-missing-repository --out releases/",
+    "typecheck": "tsc --noEmit && tsc -p webview/tsconfig.json --noEmit",
+    "typecheck:webview": "tsc -p webview/tsconfig.json --noEmit",
+    "build": "bun run build:webview && bun run build:extension",
+    "build:webview": "rm -rf webview/dist && mkdir -p webview/dist webview/dist/katex && bun build webview/src/index.ts --target=browser --format=esm --splitting --minify --outdir=webview/dist && cp webview/src/styles.css webview/dist/index.css && cp node_modules/mermaid/dist/mermaid.min.js webview/dist/mermaid.min.js && cp node_modules/katex/dist/katex.min.css webview/dist/katex/katex.min.css && cp -R node_modules/katex/dist/fonts webview/dist/katex/fonts",
+    "build:extension": "bun run build:extension:graph && bun run build:extension:atomic && bun run build:extension:main && bun run build:extension:export-runtime && bun run build:extension:puppeteer-runtime",
+    "build:extension:graph": "bun build webview/src/atomicGraph.ts --target=browser --format=iife --minify --outfile=dist/atomic-graph.js && cp webview/src/atomicGraph.css dist/atomic-graph.css",
+    "build:extension:atomic": "bun scripts/build-nodeatomic.mjs",
+    "build:extension:main": "bun build src/extension.ts --target=node --format=cjs --minify --outfile=dist/extension.js -e vscode",
+    "build:extension:main:debug": "bun build src/extension.ts --target=node --format=cjs --minify --outfile=dist/extension.js -e vscode --sourcemap=inline",
+    "build:extension:export-runtime": "bun build src/export/runtime.ts --target=node --format=cjs --minify --outfile=dist/export-runtime.js",
+    "build:extension:puppeteer-runtime": "bun build src/export/puppeteerRuntime.ts --target=node --format=cjs --minify --outfile=dist/puppeteer-runtime.js",
+    "release:prep": "bun scripts/release-prep.mjs",
+    "release:finalize": "bun scripts/release-prep.mjs finalize",
+    "vscode:publish": "bun run build && vsce package --no-dependencies"
+  },
+  "dependencies": {
+    "@codemirror/commands": "6.8.1",
+    "@codemirror/lang-cpp": "^6.0.3",
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-go": "^6.0.1",
+    "@codemirror/lang-html": "^6.4.11",
+    "@codemirror/lang-java": "^6.0.2",
+    "@codemirror/lang-javascript": "^6.2.4",
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/lang-markdown": "6.3.4",
+    "@codemirror/lang-python": "^6.2.1",
+    "@codemirror/lang-rust": "^6.0.2",
+    "@codemirror/lang-sql": "^6.10.0",
+    "@codemirror/language": "6.11.3",
+    "@codemirror/search": "6.6.0",
+    "@codemirror/state": "6.5.2",
+    "@codemirror/view": "6.36.4",
+    "@grpc/grpc-js": "^1.14.6",
+    "@grpc/proto-loader": "^0.8.1",
+    "@lezer/highlight": "^1.2.3",
+    "@replit/codemirror-vim": "^6.3.0",
+    "@types/vscode": "^1.109.0",
+    "cspell-lib": "^10.0.1",
+    "d3-drag": "3.0.0",
+    "d3-force": "3.0.0",
+    "d3-selection": "3.0.0",
+    "d3-zoom": "3.0.0",
+    "highlight.js": "^11.11.1",
+    "katex": "^0.16.28",
+    "lucide": "^0.564.0",
+    "markdown-it": "^14.1.0",
+    "markdown-it-emoji": "^3.0.0",
+    "mermaid": "^11.4.1",
+    "nodeatomic": "file:../nodeatomic",
+    "puppeteer-core": "^24.1.1",
+    "remark-directive": "^4.0.0",
+    "remark-frontmatter": "^5.0.0",
+    "remark-parse": "^11.0.0",
+    "sanitize-html": "^2.17.0",
+    "shiki": "^4.2.0",
+    "unified": "^11.0.5",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@types/d3-drag": "^3.0.7",
+    "@types/d3-force": "^3.0.10",
+    "@types/d3-selection": "^3.0.12",
+    "@types/d3-zoom": "^3.0.9",
+    "@types/markdown-it": "^14.1.2",
+    "@types/markdown-it-emoji": "^3.0.1",
+    "@types/sanitize-html": "^2.16.0",
+    "@vscode/vsce": "^4.0.0",
+    "happy-dom": "^21.0.1",
+    "typescript": "^5.9.3"
+  }
+}

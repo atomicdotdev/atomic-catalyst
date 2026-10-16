@@ -1,0 +1,11 @@
+.atomic
+.git
+node_modules
+node_modules/**
+dist
+dist/**
+out
+out/**
+webview/dist
+webview/dist/**
+*.vsix
