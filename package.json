@@ -1,27 +1,31 @@
 {
-  "name": "catalyst-intent-editor",
-  "displayName": "Catalyst Intent Editor (MEO Prototype)",
-  "description": "Source-first Atomic intent editing, based on MEO. Atomic CLI owns validation and attestations.",
-  "version": "0.2.10",
-  "publisher": "catalyst-local",
+  "name": "atomic-catalyst",
+  "displayName": "Atomic Catalyst",
+  "description": "Connect intent to source code with Atomic: edit intent tickets, manage Draft and Shared views, inspect change history, and explore code blast radius.",
+  "version": "0.2.11",
+  "publisher": "atomicdotdev",
   "license": "MIT",
   "private": true,
-  "icon": "logo.png",
+  "icon": "flask.png",
   "engines": {
     "vscode": "^1.97.0"
   },
   "categories": [
+    "SCM Providers",
     "Programming Languages",
     "Formatters",
     "Other"
   ],
   "keywords": [
+    "atomic",
+    "intent",
+    "source-code",
+    "version-control",
+    "views",
+    "blast-radius",
     "markdown",
-    "editor",
-    "live-edit",
-    "wysiwyg",
-    "markdown-editor",
-    "markdown-preview"
+    "review",
+    "agent"
   ],
   "main": "./dist/extension.js",
   "extensionKind": ["workspace"],
@@ -43,7 +47,8 @@
       "scm": [
         {
           "id": "catalystAtomic.repository",
-          "name": "Atomic History & Views"
+          "name": "Atomic History & Views",
+          "icon": "flask"
         }
       ]
     },
@@ -199,7 +204,7 @@
           "type": "boolean",
           "default": false,
           "order": 1,
-          "description": "Use Markdown Editor Optimized as the default editor for Markdown files"
+          "description": "Use atomic-catalyst as the default editor for Markdown files"
         },
         "catalystIntent.outline.position": {
           "type": "string",
@@ -220,7 +225,7 @@
           "default": false,
           "scope": "application",
           "order": 3,
-          "description": "Make all Markdown Editor Optimized documents read-only in Live and Source. Remembered across editor sessions and workspaces."
+          "description": "Make all atomic-catalyst documents read-only in Live and Source. Remembered across editor sessions and workspaces."
         },
         "catalystIntent.contentMaxWidth.visible": {
           "type": "boolean",
@@ -250,7 +255,7 @@
           "type": "boolean",
           "default": true,
           "order": 6,
-          "description": "Show built-in spelling diagnostics in Markdown Editor Optimized when no external spell checker diagnostics are available."
+          "description": "Show built-in spelling diagnostics in atomic-catalyst when no external spell checker diagnostics are available."
         },
         "catalystIntent.vimMode.enabled": {
           "type": "boolean",
@@ -269,8 +274,8 @@
           ],
           "enumDescriptions": [
             "Enable Vim emulation automatically when VSCodeVim (vscodevim.vim) is installed and enabled, or when VSCode Neovim (asvetliakov.vscode-neovim) is installed.",
-            "Always enable Vim emulation in Markdown Editor Optimized.",
-            "Always disable Vim keybindings in Markdown Editor Optimized."
+            "Always enable Vim emulation in atomic-catalyst.",
+            "Always disable Vim keybindings in atomic-catalyst."
           ],
           "default": "auto",
           "order": 6,

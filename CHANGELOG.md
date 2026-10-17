@@ -1,4 +1,10 @@
-# Catalyst Intent Editor
+# Atomic Catalyst
+
+## 0.2.11
+- Rename the extension to Atomic Catalyst with the registered package name `atomic-catalyst` and publisher ID `atomicdotdev`.
+- Use the flask artwork as the extension icon.
+- Refresh the description, categories, keywords, and README to cover intents, source code, Draft and Shared views, change history, and blast-radius analysis.
+- Replace inherited MEO branding in settings descriptions while preserving upstream attribution and existing command, setting, and editor IDs.
 
 ## 0.2.10
 - Expose change-local governing plan IDs and their recorded graph/session-turn sources through Atomic, libatomic and generated nodeatomic types.

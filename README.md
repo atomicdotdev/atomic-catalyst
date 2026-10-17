@@ -1,6 +1,8 @@
-# Catalyst Intent Editor
+# Atomic Catalyst
 
-A Jira-style **Atomic intent ticket editor** for VS Code-compatible editors, built on the MIT-licensed [Markdown Editor Optimized (MEO)](https://github.com/vadimmelnicuk/meo) foundation.
+Connect **intent to source code** in VS Code-compatible editors: edit Atomic intent tickets, review source changes and history, manage **Draft and Shared views**, and explore the **blast radius** of code changes through file, caller, and importer relationships.
+
+The intent editor is built on the MIT-licensed [Markdown Editor Optimized (MEO)](https://github.com/vadimmelnicuk/meo) foundation.
 
 This is an **extension**, not a Markdown Preview plugin. It edits existing intent Markdown files and provides an Atomic version control panel through the in-process `nodeatomic` consumer. Intent validation and attestation are not performed by the editor.
 
