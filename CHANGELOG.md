@@ -1,5 +1,13 @@
 # Atomic Catalyst
 
+## 0.2.12
+- Package one universal, JavaScript-only VSIX; Atomic's platform library is supplied by the separate Atomic installation on the extension host.
+- Stop copying nodeatomic's development addon and exclude stale native binaries from packaging.
+- Verify every generated VSIX has no platform target or native payload, and smoke-test its extracted consumer outside the source checkout.
+- Check lazy import and missing-runtime behavior without Atomic; when a runtime is explicitly configured, also verify actual installed native dispatch.
+- Surface runtime installation, checksum, contract and platform failures with recovery guidance instead of recommending an extension rebuild.
+- Platform-specific Node/Electron host testing remains required before claiming tested support; no Marketplace publication is performed.
+
 ## 0.2.11
 - Rename the extension to Atomic Catalyst with the registered package name `atomic-catalyst` and publisher ID `atomicdotdev`.
 - Use the flask artwork as the extension icon.

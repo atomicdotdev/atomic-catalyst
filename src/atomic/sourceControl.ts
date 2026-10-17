@@ -36,6 +36,7 @@ class AtomicSourceControl implements vscode.TreeDataProvider<Node>, vscode.Dispo
   private disposed = false;
   private connecting = false;
   private message = 'Open a local Atomic repository workspace to see history and views.';
+  private discoveryIssue?: AtomicIssue;
   private readonly output = vscode.window.createOutputChannel('Atomic Version Control');
   private readonly diffs = new AtomicDiffEditor();
 
@@ -197,11 +198,12 @@ class AtomicSourceControl implements vscode.TreeDataProvider<Node>, vscode.Dispo
   }
 
   private loadConsumer(): Promise<Consumer> {
-    // Keep import() native in the CommonJS extension bundle; addon paths are relative to this ESM runtime.
+    // Keep import() native in the CommonJS extension bundle. The JS consumer
+    // discovers the separately installed Atomic library lazily on first use.
     const url = pathToFileURL(path.join(this.context.extensionPath, 'dist', 'nodeatomic', 'index.mjs')).href;
     return this.consumer ??= import(url).catch((error) => {
       this.consumer = undefined;
-      throw new Error(`Cannot load the packaged nodeatomic runtime/addon for ${process.platform}-${process.arch}: ${String(error)}. Rebuild with a matching prebuilt addon.`);
+      throw new Error(`Cannot load the packaged nodeatomic JavaScript consumer: ${String(error)}. Reinstall the extension; native runtime installation is handled separately.`);
     });
   }
 
@@ -213,6 +215,8 @@ class AtomicSourceControl implements vscode.TreeDataProvider<Node>, vscode.Dispo
       return;
     }
     this.connecting = true;
+    this.discoveryIssue = undefined;
+    this.message = 'Open a local Atomic repository workspace to see history and views.';
     try {
       const roots = new Set<string>();
       for (const folder of vscode.workspace.workspaceFolders ?? []) {
@@ -256,8 +260,9 @@ class AtomicSourceControl implements vscode.TreeDataProvider<Node>, vscode.Dispo
           this.disposables.push(watcher.onDidChange(schedule), watcher.onDidCreate(schedule), watcher.onDidDelete(schedule));
           await this.refresh(owner);
         } catch (error) {
-          this.message = `Atomic unavailable: ${error instanceof Error ? error.message : String(error)}`;
-          this.output.appendLine(this.message);
+          this.discoveryIssue = describeAtomicError(error);
+          this.message = this.discoveryIssue.title;
+          this.output.appendLine(`${root}: ${this.discoveryIssue.detail}\n${this.discoveryIssue.recovery}`);
         }
       }
     } finally {
@@ -345,7 +350,11 @@ class AtomicSourceControl implements vscode.TreeDataProvider<Node>, vscode.Dispo
   getChildren(node?: Node): Node[] | Promise<Node[]> {
     if (node?.owner && node.viewName) return this.viewChanges(node.owner, node.viewName);
     if (node) return node.children ?? [];
-    if (!this.repositories.size) return [{ label: this.message, tooltip: this.message }];
+    if (!this.repositories.size) {
+      const issue = this.discoveryIssue;
+      return [{ label: this.message, tooltip: issue ? `${issue.detail}\n\n${issue.recovery}` : this.message,
+        ...(issue ? { iconPath: new vscode.ThemeIcon('warning'), command: { command: 'catalystAtomic.showOutput', title: 'Show Recovery Guidance' } } : {}) }];
+    }
     return [...this.repositories.values()].map((owner) => {
       const status = owner.session.status;
       if (owner.issue) {

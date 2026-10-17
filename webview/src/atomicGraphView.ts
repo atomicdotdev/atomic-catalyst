@@ -77,7 +77,7 @@ export function mountAtomicGraph(root: HTMLElement, send: (message: unknown) => 
         files.append(row);
       }
     } else {
-      line(files, 'Graph summary unavailable. Install the current nodeatomic native addon.', 'muted');
+      line(files, 'Graph summary unavailable. Use a compatible Atomic runtime and nodeatomic consumer.', 'muted');
       line(files, 'Affected paths (native graph counts unavailable):', 'muted');
       for (const path of change.affectedPaths || []) { const row = el('p', undefined, 'native-line native-indent file-summary'); row.append(fileLink(change, path)); files.append(row); }
     }

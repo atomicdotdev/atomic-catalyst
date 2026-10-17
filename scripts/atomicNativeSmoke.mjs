@@ -1,5 +1,6 @@
 // Explicit integration smoke test. The CLI provisions only a disposable fixture;
-// application operations use the packaged in-process runtime, with an unusable daemon endpoint.
+// application operations use the bundled JS consumer and installed native runtime,
+// with an unusable daemon endpoint. No native library is shipped in the VSIX.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtemp, writeFile, mkdir, rm } from 'node:fs/promises';
@@ -100,7 +101,7 @@ try {
   await repo.views.switch(status.view);
   await repo.views.delete('feature');
   assert.ok(!(await repo.views.list()).views.some((view) => view.name === 'feature'));
-   console.log('Packaged native checks passed: change-local blast radius, native graph counts and hunk summaries, Draft scope, four own records, affected paths, decoded AI metadata with shared request IDs/recorded zero cost, and dirty-switch guards.');
+   console.log('Installed-runtime checks passed through bundled JS: change-local blast radius, native graph counts and hunk summaries, Draft scope, four own records, affected paths, decoded AI metadata with shared request IDs/recorded zero cost, and dirty-switch guards.');
 } finally {
   await rm(root, { recursive: true, force: true });
 }

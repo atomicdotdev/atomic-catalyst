@@ -2,7 +2,7 @@
   "name": "atomic-catalyst",
   "displayName": "Atomic Catalyst",
   "description": "Connect intent to source code with Atomic: edit intent tickets, manage Draft and Shared views, inspect change history, and explore code blast radius.",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "publisher": "atomicdotdev",
   "license": "MIT",
   "private": true,
@@ -39,7 +39,7 @@
     },
     "virtualWorkspaces": {
       "supported": "limited",
-      "description": "Atomic version control requires a local filesystem and a matching native addon."
+      "description": "Atomic version control requires a local filesystem and a compatible Atomic runtime installed on the extension host."
     }
   },
   "contributes": {
@@ -827,10 +827,12 @@
     "test:atomic": "bun test scripts/atomicIntent.test.mjs scripts/atomicIntentView.test.mjs scripts/atomicSourceControl.test.mjs scripts/atomicErrors.test.mjs scripts/atomicEvidence.test.mjs scripts/atomicDraftView.test.mjs scripts/atomicChangeMetadata.test.mjs scripts/atomicBlastRadius.test.mjs scripts/atomicFileDiff.test.mjs scripts/atomicPlanContext.test.mjs",
     "test:atomic:graph": "bun run build:extension:graph && bun scripts/atomicViewHostSmoke.mjs && bun scripts/atomicDiffHostSmoke.mjs && bun scripts/atomicGraphSmoke.mjs",
     "test:atomic:native": "bun run build:extension:atomic && node scripts/atomicNativeSmoke.mjs",
+    "test:atomic:runtime": "node scripts/atomicRuntimeSmoke.mjs --native",
     "test:core": "bun test scripts/documentLifecycle.test.mjs",
     "preview": "bun scripts/preview.mjs",
     "test:browser": "bun scripts/browserSmoke.mjs",
-    "package:vsix": "bun run build && mkdir -p releases && vsce package --no-dependencies --allow-missing-repository --out releases/",
+    "package:vsix": "bun run build && node scripts/package-universal.mjs",
+    "verify:vsix": "node scripts/verify-universal-vsix.mjs",
     "typecheck": "tsc --noEmit && tsc -p webview/tsconfig.json --noEmit",
     "typecheck:webview": "tsc -p webview/tsconfig.json --noEmit",
     "build": "bun run build:webview && bun run build:extension",
@@ -844,7 +846,7 @@
     "build:extension:puppeteer-runtime": "bun build src/export/puppeteerRuntime.ts --target=node --format=cjs --minify --outfile=dist/puppeteer-runtime.js",
     "release:prep": "bun scripts/release-prep.mjs",
     "release:finalize": "bun scripts/release-prep.mjs finalize",
-    "vscode:publish": "bun run build && vsce package --no-dependencies"
+    "vscode:publish": "npm run package:vsix"
   },
   "dependencies": {
     "@codemirror/commands": "6.8.1",

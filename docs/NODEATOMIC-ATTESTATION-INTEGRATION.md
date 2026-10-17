@@ -1,5 +1,7 @@
 # nodeatomic integration handoff: attestation badge and signed intent view
 
+> **Historical integration notes:** Since Catalyst 0.2.12, native packaging guidance in this document is superseded by the README's universal-VSIX workflow. The VSIX bundles only the JavaScript consumer; nodeatomic dynamically loads a compatible platform library from the separate Atomic installation. Do not copy `libatomic.node` into the extension or assume its path is relative to the bundled consumer. The service/attestation design notes below retain their historical context.
+
 Applies to intent **CATA::continuouslee::2**
 (`01M4RQ7JR2CEK4QFJGV2B8K270`), “Add RPC-backed attestation badge and read-only
 signed intent view.” This is an investigation/handoff, not an implemented UI or

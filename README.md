@@ -10,6 +10,8 @@ This is an **extension**, not a Markdown Preview plugin. It edits existing inten
 
 Local packages are written to `releases/`. Use the version confirmed by the build and verification output; a source version bump alone does not update the installed extension.
 
+**Atomic prerequisite:** Atomic features require a compatible complete Atomic installation on the **extension host**, including its CLI, platform library, and `libatomic-runtime.json`. This is a universal JavaScript-only VSIX, not a bundled native runtime. Install the complete release archive into a versioned directory and put it on PATH, or set an absolute `ATOMIC_RUNTIME_DIR` before launching the editor. Older CLI-only installations are insufficient. For Remote SSH/WSL/containers, install Atomic remotely. Fully restart the editor after environment/runtime changes. Intent/Markdown editing does not require loading the native runtime.
+
 1. In VS Code, VSCodium, Catalyst, or another compatible editor, open the Command Palette.
 2. Run **Extensions: Install from VSIX…** and select that file.
 3. Reload the editor window if prompted.
@@ -78,24 +80,35 @@ atomic doctor repair-native-indexes
 
 This explicitly writes/rebuilds derived database indexes from repository authority. If it refuses, preserve the full error and resolve the reported authority problem rather than deleting the database or reinitializing the repository. Once it succeeds, run **Atomic: Refresh Version Control**. The extension does not run migrations or repairs automatically. Click the panel's warning or recovery item to open the exact per-repository error and guidance.
 
-All repository calls run in the extension host through `nodeatomic` → the prebuilt `libatomic.node` addon. There is no daemon startup, CLI subprocess, socket, direct database access, or webview native access. Native editor diffs use read-only backend content; no repository initialization, untracking, restore mutation, pull/push, signing, or attestation creation is added by this panel. The existing Git-specific editor gutter/blame features remain Git-specific.
+All repository calls run in the extension host through `nodeatomic` → the separately installed Node-enabled `libatomic.dylib`, `libatomic.so`, or `libatomic.dll`. nodeatomic selects the host OS/CPU, validates release metadata/checksums and its exact generated protobuf descriptor, then loads the library in-process. It follows the active Atomic executable on PATH (including executable symlinks), or explicit `ATOMIC_RUNTIME_DIR`, `LIBATOMIC_ADDON`, or `ATOMIC_BIN` configuration. Do not set `ATOMIC_RUNTIME_DIR` together with `LIBATOMIC_ADDON`; paths must be absolute. Automatic discovery excludes empty/relative PATH entries and the current working directory. Use a trusted installation PATH, not workspace-controlled executables.
+
+There is no daemon startup, CLI subprocess for repository operations, socket, direct database access, or webview native access. Missing/incompatible runtimes fail with installation/recovery guidance, not an automatic download, compiler invocation, schema repair, or fallback to another installation. Native editor diffs use read-only backend content; no repository initialization, untracking, restore mutation, pull/push, signing, or attestation creation is added by this panel. The existing Git-specific editor gutter/blame features remain Git-specific.
 
 ## Develop and package
 
-Requirements: Node.js 18+/npm, Bun, a VS Code-compatible editor, and a **previously built nodeatomic consumer with an explicitly installed prebuilt addon** matching the extension host's OS/architecture. The current local development dependency is `file:../nodeatomic`; build that project independently using its README first. Catalyst never builds Rust or searches for Atomic producer sources.
+Build requirements: Node.js 22+/npm (for VSCE 4), Bun, a VS Code-compatible editor, and a **previously built universal nodeatomic JavaScript consumer**. The current development dependency is `file:../nodeatomic`; build that project independently using its README first. Its compiled codecs/fingerprint are bundled, so the resulting VSIX does not need that checkout. Catalyst never builds Rust or searches for Atomic producer sources. Building/packaging does not require a native library unless an explicit runtime override requests the native smoke.
 
 ```sh
 npm ci
 npm test
 npm run typecheck
 # Optional integration smoke: Atomic CLI is used only to create a temporary fixture.
+# Requires a complete installed runtime on PATH or an explicit ATOMIC_RUNTIME_DIR.
 npm run test:atomic:native
+# Native dispatch without creating a repository (also supports PATH discovery).
+npm run test:atomic:runtime
 # Optional view-tree host-module and built overview browser checks (requires Chrome/Edge).
 npm run test:atomic:graph
 npm run package:vsix
+# Recheck an existing archive (defaults to the current manifest's release filename).
+npm run verify:vsix
 ```
 
-The extension build bundles the consumer's JavaScript/protobuf dependencies as `dist/nodeatomic/index.mjs`, copies its addon to `dist/native/libatomic.node`, and checks that the runtime loads in **Node**, preserving the addon's relative path. Both files ship in the VSIX despite `node_modules` being excluded. Do not replace the addon while an extension host is using it. For Remote SSH/WSL/containers the binary must match the **remote extension host**, not the UI machine. Native platform distribution and a packaged VS Code/Electron host smoke test are still required before release; the Node smoke test does not establish Electron compatibility. Browser preview does not exercise this panel.
+The extension build bundles only JavaScript/protobuf dependencies as `dist/nodeatomic/index.mjs`. It checks lazy import, codec access and missing-runtime rejection in **Node**, not Bun. With an explicit runtime override it additionally checks actual native dispatch; an import alone is not evidence that a library loaded. The default build does not copy, remove or overwrite native libraries. `.vscodeignore` excludes legacy `dist/native/**` and native filenames even if old build artifacts remain on disk.
+
+`package:vsix` deliberately sets no platform target. It validates the generated archive's identity/version, rejects platform-targeted manifests and native payloads, and runs the exact archived consumer from an isolated temporary directory without `node_modules`. Native dispatch is also checked when a runtime override is present. This guards against accidental sibling-checkout dependencies and stale native assets. `verify:vsix` accepts an archive path as an optional argument. Neither command publishes to the Marketplace.
+
+**Universal packaging is not a claim of tested support on every host.** The external producer currently supplies macOS ARM64, Linux x64 glibc, and Windows x64 runtimes. Validate the same VSIX inside the actual VS Code/Electron extension host on each platform before claiming compatibility. Node-only integration tests do not establish Electron compatibility. Remote hosts need their own matching runtime. Browser preview does not exercise this panel. External Atomic installers and self-update must preserve the complete CLI/library pair; this extension does not implement those installation paths.
 
 Alternatively, open this repository in VS Code and press **F5** to launch its Extension Development Host. Open `examples/catalyst.intent.md` there as **Atomic Intent Ticket**.
 

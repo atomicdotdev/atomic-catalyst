@@ -25,3 +25,26 @@ test('other failures preserve the backend reason without prescribing a schema re
     expect(issue.recovery).not.toContain('repair-native-indexes');
   }
 });
+
+test('missing installed runtime gives installation guidance, not an extension rebuild', () => {
+  const error = Object.assign(new Error('Atomic is not installed'), { code: 'ATOMIC_RUNTIME_NOT_FOUND' });
+  const issue = describeAtomicError(error);
+  expect(issue.title).toBe('Install Atomic to enable version control');
+  expect(issue.requiresUpgrade).toBe(false);
+  expect(issue.recovery).toContain('ATOMIC_RUNTIME_DIR');
+  expect(issue.recovery).toContain('Remote SSH');
+  expect(issue.recovery).toContain('does not bundle');
+  expect(issue.recovery).not.toContain('repair-native-indexes');
+});
+
+test('runtime validation failures remain separate from repository schema upgrades', () => {
+  for (const code of ['ATOMIC_RUNTIME_CONTRACT', 'ATOMIC_RUNTIME_INTEGRITY', 'ATOMIC_RUNTIME_MANIFEST',
+    'ATOMIC_RUNTIME_CONFIGURATION', 'ATOMIC_RUNTIME_LOAD', 'ATOMIC_UNSUPPORTED_PLATFORM', 'ATOMIC_NODE_API_UNSUPPORTED']) {
+    const issue = describeAtomicError(Object.assign(new Error('Runtime failed'), { code }));
+    expect(issue.title).toBe('Atomic runtime unavailable or incompatible');
+    expect(issue.detail).toBe('Runtime failed');
+    expect(issue.requiresUpgrade).toBe(false);
+    expect(issue.recovery).toContain('fully restart');
+    expect(issue.recovery).not.toContain('repair-native-indexes');
+  }
+});

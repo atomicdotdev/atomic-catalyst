@@ -4,6 +4,13 @@ apps/**
 out/**
 packages/**
 node_modules/**
+dist/native/**
+**/*.node
+**/*.dylib
+**/*.so
+**/*.so.*
+**/*.dll
+**/*.exe
 webview/node_modules/**
 webview/src/**
 webview/.gitignore

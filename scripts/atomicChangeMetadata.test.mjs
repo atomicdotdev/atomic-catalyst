@@ -77,7 +77,7 @@ test('webview renders native counts, symbols and hunk descriptions as text, with
   expect(root.textContent).toContain('Files changed: 0');
   render(undefined);
   expect(root.querySelector('.graph-summary')).toBeNull();
-  expect(root.textContent).toContain('Install the current nodeatomic native addon');
+  expect(root.textContent).toContain('Use a compatible Atomic runtime and nodeatomic consumer');
   expect(root.textContent).not.toContain('Files changed: 0');
   expect(root.textContent).toContain('src/real.ts');
   window.happyDOM.abort();
