@@ -60,7 +60,7 @@ assert.equal(panel.lastState.viewInfo.scope, 'draft'); assert.equal(session.stat
 assert.deepEqual(calls, []); // View clicks no longer hydrate a dashboard.
 assert.equal(shared.collapsibleState, 1);
 const rows = await provider.getChildren(shared);
-assert.equal(rows[0].label, displayChangeHash(Buffer.from(hash).toString('hex')).slice(0, 12));
+assert.equal(rows[0].label, 'Selected change'); assert.equal(rows[0].description, displayChangeHash(Buffer.from(hash).toString('hex')).slice(0, 12));
 assert.deepEqual(rows[0].command.arguments, [owner, hash, 'main']);
 const selection = panel.waitForSelection();
 await commands.get(rows[0].command.command)(...rows[0].command.arguments);

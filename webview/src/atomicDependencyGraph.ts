@@ -6,8 +6,9 @@ import type { EvidenceEdge, EvidenceNode } from '../../src/shared/atomicEvidence
 
 /** Adapted from atomic-cli/src/commands/query/mod.rs, emit_html (Atomic query graph).
  * Copyright 2025-2026 Atomic Software, Co.; Apache-2.0 (THIRD_PARTY_APACHE_LICENSE.txt).
- * Webview changes: scoped canvas, bundled D3, directed arrows, safe text and inspector selection.
- * Keep its palette, radii and force parameters; never fetch graph code from a CDN.
+ * Webview changes: scoped canvas, bundled D3, directed arrows, safe text, inspector selection,
+ * editor-theme background/label colors and basename labels on small graphs.
+ * Keep its node palette, radii and force parameters; never fetch graph code from a CDN.
  */
 export const QUERY_NODE_COLORS: Record<string, string> = {
   module: '#3498db', file: '#2ecc71', entity: '#e67e22', change: '#e74c3c',
@@ -94,6 +95,11 @@ export function mountDependencyGraph(container: HTMLElement, nodes: EvidenceNode
 
   let width = Math.max(1, viewport.clientWidth), height = Math.max(1, viewport.clientHeight);
   const context = canvas.getContext('2d')!;
+  // Read the editor theme once so strokes and labels follow light/dark themes; node colors keep the CLI palette.
+  const themeColor = (name: string, fallback: string) => (win.getComputedStyle(container).getPropertyValue(name) || '').trim() || fallback;
+  const themeForeground = themeColor('--vscode-editor-foreground', '#cccccc');
+  const themeBackground = themeColor('--vscode-editor-background', '#1e1e1e');
+  const labelAll = nodes.length <= 40;
   const data = { ...queryGraphData(nodes, edges), transform: zoomIdentity, destroyed: false, width, height };
   // D3's bound presentation data contains only display DTOs and simulated positions.
   const surface = d3Select(canvas).datum(data);
@@ -111,7 +117,7 @@ export function mountDependencyGraph(container: HTMLElement, nodes: EvidenceNode
     context.lineWidth = 0.6; context.globalAlpha = 0.4;
     for (const link of data.links) {
       const s = link.source, t = link.target;
-      context.strokeStyle = QUERY_EDGE_COLORS[link.kind.toUpperCase().replace(/ /g, '_')] || '#555';
+      context.strokeStyle = QUERY_EDGE_COLORS[link.kind.toUpperCase().replace(/ /g, '_')] || themeForeground;
       context.beginPath(); context.moveTo(s.x!, s.y!); context.lineTo(t.x!, t.y!); context.stroke();
       // Tiny arrowheads preserve the recorded dependency direction without changing the CLI visual.
       const angle = Math.atan2(t.y! - s.y!, t.x! - s.x!);
@@ -124,16 +130,16 @@ export function mountDependencyGraph(container: HTMLElement, nodes: EvidenceNode
       context.globalAlpha = node.loaded ? 0.9 : 0.45;
       context.beginPath(); context.arc(node.x!, node.y!, node.r, 0, 2 * Math.PI);
       context.fillStyle = nodeColor(node); context.fill();
-      context.globalAlpha = 1; context.strokeStyle = node.loaded ? '#222' : nodeColor(node);
+      context.globalAlpha = 1; context.strokeStyle = node.loaded ? themeBackground : nodeColor(node);
       context.lineWidth = 1.2; context.setLineDash(node.loaded ? [] : [2, 2]); context.stroke(); context.setLineDash([]);
       if (node.selected) {
         context.beginPath(); context.arc(node.x!, node.y!, node.r + 4, 0, 2 * Math.PI);
-        context.strokeStyle = '#fff'; context.lineWidth = 1.5; context.stroke();
+        context.strokeStyle = themeForeground; context.lineWidth = 1.5; context.stroke();
       }
-      if (node.r > 10) {
-        const label = `${node.label}${node.kind === 'module' ? '/' : ''}`;
-        context.globalAlpha = 0.85; context.fillStyle = '#ccc'; context.textAlign = 'center'; context.textBaseline = 'top';
-        context.font = `${Math.max(9, Math.min(12, node.r * 0.7))}px -apple-system, BlinkMacSystemFont, sans-serif`;
+      if (node.r > 10 || labelAll) {
+        const label = node.r > 10 ? `${node.label}${node.kind === 'module' ? '/' : ''}` : node.label.split('/').pop() || node.label;
+        context.globalAlpha = 0.85; context.fillStyle = themeForeground; context.textAlign = 'center'; context.textBaseline = 'top';
+        context.font = `${node.r > 10 ? Math.max(9, Math.min(12, node.r * 0.7)) : 10}px -apple-system, BlinkMacSystemFont, sans-serif`;
         context.fillText(label.length > 28 ? `${label.slice(0, 25)}...` : label, node.x!, node.y! + node.r + 3);
       }
     }

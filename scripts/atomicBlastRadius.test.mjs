@@ -60,3 +60,58 @@ describe('Native blast-radius projection and single-change matrix', () => {
     ui.dispose(); window.happyDOM.abort();
   });
 });
+
+describe('Blast-radius file list is visible by default and the matrix filters it', () => {
+  const mount = (selection) => {
+    const window = new Window(), root = window.document.createElement('div'); window.document.body.append(root);
+    const ui = mountAtomicGraph(root, () => {});
+    ui.receive({ type: 'state', state: { view: 'feature', workingCopyView: 'main' } });
+    ui.receive({ type: 'selection', selection });
+    return { window, root, ui };
+  };
+  test('every file and its structural reason is readable without pressing a cell', () => {
+    const { window, root } = mount(change());
+    const drill = root.querySelector('.blast-drill');
+    expect(drill.hidden).toBe(false);
+    expect(root.querySelector('.blast-summary').textContent).toBe('4 files edited · 2 dependents in 2 modules');
+    expect(drill.textContent).toContain('src/api.ts');
+    expect(drill.textContent).toContain('2 dependents');
+    expect(drill.textContent.match(/edited directly/gi)).toHaveLength(1);
+    expect(drill.textContent).toContain('tests/api.ts');
+    expect(drill.textContent).toContain('calls src/api.ts');
+    expect(drill.textContent).toContain('includes src/api.ts');
+    expect(root.querySelector('.blast-header').textContent).not.toContain('changed:');
+    expect(root.querySelector('.blast-explanation')).toBeNull();
+    window.happyDOM.abort();
+  });
+  test('pressing a cell narrows the list; show-all or a second press restores it', () => {
+    const { window, root } = mount(change());
+    const cell = [...root.querySelectorAll('.blast-cell')].find((node) => node.getAttribute('aria-label') === 'tests, hop 2: 1 files');
+    cell.click();
+    const drill = root.querySelector('.blast-drill');
+    expect(drill.textContent).toContain('tests · hop 2');
+    [...root.querySelectorAll('.blast-cell')].find((node) => node.getAttribute('aria-label') === 'src, hop 1: 1 files').click();
+    expect(drill.textContent).toContain('src/api.ts edited directly · 2 dependents');
+    cell.click();
+    expect(drill.textContent).toContain('tests/api.ts');
+    expect(drill.textContent).not.toContain('src/ui.ts');
+    expect(root.querySelector('.blast-matrix').dataset.filtered).toBe('true');
+    root.querySelector('.blast-show-all').click();
+    expect(drill.textContent).toContain('src/ui.ts');
+    expect(cell.getAttribute('aria-pressed')).toBe('false');
+    expect(root.querySelector('.blast-matrix').dataset.filtered).toBe('false');
+    cell.click(); cell.click();
+    expect(drill.textContent).toContain('src/ui.ts');
+    expect(root.querySelector('.blast-show-all')).toBeNull();
+    window.happyDOM.abort();
+  });
+  test('missing analysis lists dependents as unknown and groups top-level files under (root)', () => {
+    const missing = change(); delete missing.blastRadius;
+    const { window, root } = mount(missing);
+    expect(root.querySelector('.blast-summary').textContent).toBe('4 files edited · dependents unknown');
+    expect(root.querySelector('.blast-drill').textContent).toContain('Callers & importers · unknown');
+    expect(root.querySelector('.blast-drill').textContent).not.toMatch(/\b0 dependents/);
+    expect([...root.querySelectorAll('.blast-cell')].some((node) => node.getAttribute('aria-label') === '(root), hop 1: 1 files')).toBe(true);
+    window.happyDOM.abort();
+  });
+});
