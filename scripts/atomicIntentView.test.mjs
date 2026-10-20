@@ -84,12 +84,34 @@ test('Edit opens a prose editor and Save changes only the task description', () 
   expect(view.state.doc.sliceString(directive.from, directive.headerTo)).toBe(directive.header);
 });
 
+test('form-level shortcuts: Ctrl/⌘+Enter saves and Esc cancels (the CodeMirror Mod-Enter conflict is covered by browserSmoke.mjs)', () => {
+  const { view } = createView();
+  const openTask = () => {
+    [...view.dom.querySelectorAll('[data-directive="task"] button')].find((item) => item.textContent === 'Edit').click();
+    return EditorView.findFromDOM(view.dom.querySelector('.atomic-ticket-prose-editor .cm-editor'));
+  };
+  const press = (editor, init) => editor.contentDOM.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init }));
+  press(openTask(), { key: 'Enter', ctrlKey: true });
+  expect(view.dom.querySelector('.atomic-ticket-edit-form')).toBeNull();
+  expect(view.state.doc.toString()).toBe(source);
+  const edited = openTask();
+  edited.dispatch({ changes: { from: 0, to: edited.state.doc.length, insert: 'Saved by keyboard.' } });
+  press(edited, { key: 'Enter', ctrlKey: true });
+  expect(view.dom.querySelector('.atomic-ticket-edit-form')).toBeNull();
+  expect(view.state.doc.toString()).toBe(source.replace('Do the work.', 'Saved by keyboard.'));
+  const discarded = openTask();
+  discarded.dispatch({ changes: { from: 0, to: discarded.state.doc.length, insert: 'Discard me.' } });
+  press(discarded, { key: 'Escape' });
+  expect(view.dom.querySelector('.atomic-ticket-edit-form')).toBeNull();
+  expect(view.state.doc.toString()).toBe(source.replace('Do the work.', 'Saved by keyboard.'));
+});
+
 test('task criterion navigation highlights and focuses its card without changing source', () => {
   const { view } = createView();
   const criterion = view.state.field(atomicIntentDocumentField).directives.find((item) => item.name === 'acceptance-criterion');
   let navigated = false;
   view.dom.querySelector('[data-ticket-id="ac-1"]').scrollIntoView = () => { navigated = true; };
-  const link = [...view.dom.querySelectorAll('[data-directive="task"] button')].find((item) => item.textContent === 'Linked acceptance criterion ↗');
+  const link = [...view.dom.querySelectorAll('[data-directive="task"] button')].find((item) => item.classList.contains('atomic-ticket-link'));
   link.click();
   expect(navigated).toBe(true);
   const target = view.dom.querySelector('[data-ticket-id="ac-1"]');

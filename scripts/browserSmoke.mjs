@@ -86,6 +86,32 @@ try {
     assert.equal(await page.$eval('.atomic-ticket-card-highlighted', (card) => document.activeElement === card), true);
     assert.equal(await page.evaluate(() => window.__atomicPreviewSource), fixture);
 
+    stage = 'prose keyboard shortcuts';
+    const openTaskEditor = async () => {
+      await page.evaluate(() => [...document.querySelectorAll('[data-directive="task"] button')].find((button) => button.textContent === 'Edit').click());
+      await page.waitForFunction(() => Boolean(document.activeElement?.closest('.atomic-ticket-prose-editor')));
+    };
+    const chord = async (key) => { await page.keyboard.down(modifier); await page.keyboard.press(key); await page.keyboard.up(modifier); };
+    await openTaskEditor();
+    await chord('Enter');
+    await page.waitForFunction(() => !document.querySelector('.atomic-ticket-edit-form'));
+    assert.equal(await page.evaluate(() => window.__atomicPreviewSource), fixture, 'Mod+Enter on an unchanged body must close the editor without inserting a blank line');
+    await openTaskEditor();
+    await chord('End');
+    await page.keyboard.type(' Saved by keyboard.');
+    await chord('Enter');
+    await page.waitForFunction(() => !document.querySelector('.atomic-ticket-edit-form'));
+    assert.ok((await page.evaluate(() => window.__atomicPreviewSource)).includes(' Saved by keyboard.'));
+    await page.focus('.atomic-ticket-title-row button');
+    await chord('z');
+    await page.waitForFunction((expected) => window.__atomicPreviewSource === expected, {}, fixture);
+    await page.waitForFunction(() => !document.querySelector('.atomic-ticket-task')?.textContent.includes('Saved by keyboard.'));
+    await openTaskEditor();
+    await page.keyboard.type('discarded');
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => !document.querySelector('.atomic-ticket-edit-form'));
+    assert.equal(await page.evaluate(() => window.__atomicPreviewSource), fixture);
+
     assert.deepEqual(pageErrors, []);
     if (process.env.SCREENSHOT_PATH) {
       await page.screenshot({ path: process.env.SCREENSHOT_PATH });

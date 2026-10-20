@@ -3135,99 +3135,194 @@ body {
   border: 0;
   background: var(--vscode-editor-background, #1e1e1e);
 }
+/* The Markdown formatting toolbar is meaningless on a ticket; keep only Read-only and the Ticket/Source switch. */
 .editor-root:has(.atomic-ticket-active) .format-group { display: none; }
+.editor-root:has(.atomic-ticket-active) .right-group > :not([data-action="readOnly"]) { display: none; }
+
 .atomic-ticket {
+  --ticket-fg: var(--vscode-editor-foreground, #ddd);
+  --ticket-muted: var(--vscode-descriptionForeground, #999);
+  --ticket-border: var(--vscode-panel-border, #444);
+  --ticket-surface: var(--vscode-sideBar-background, #252526);
+  --ticket-code-bg: var(--vscode-textCodeBlock-background, #333);
+  --ticket-link: var(--vscode-textLink-foreground, #75beff);
+  --ticket-focus: var(--vscode-focusBorder, #007fd4);
+  --ticket-mono: var(--vscode-editor-font-family, ui-monospace, Menlo, Consolas, monospace);
   box-sizing: border-box;
-  max-width: 1240px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 30px 36px 48px;
+  padding: 28px 36px 48px;
   font: 14px/1.6 var(--vscode-font-family, system-ui, sans-serif);
-  color: var(--vscode-editor-foreground, #ddd);
+  color: var(--ticket-fg);
 }
 .atomic-ticket * { box-sizing: border-box; }
-.atomic-ticket-header { position: relative; padding-bottom: 28px; }
-.atomic-ticket-breadcrumb { font-size: 12px; color: var(--vscode-descriptionForeground, #999); padding-right: 250px; }
-.atomic-ticket-top-actions { display: flex; align-items: center; gap: 12px; position: absolute; top: 0; right: 0; }
-.atomic-ticket-title-row { display: flex; align-items: flex-start; gap: 14px; margin-top: 22px; }
+.atomic-ticket-icon { flex: none; vertical-align: -2px; }
+.atomic-ticket-code { font-family: var(--ticket-mono); font-size: 12px; background: var(--ticket-code-bg); border-radius: 4px; padding: 1px 6px; overflow-wrap: anywhere; }
+.atomic-ticket-muted { color: var(--ticket-muted); font-size: 12px; }
+
+/* Tones: recorded status/priority words map onto theme chart colors; nothing is invented. */
+.atomic-ticket [data-tone="done"] { --tone: var(--vscode-charts-green, #89d185); }
+.atomic-ticket [data-tone="progress"] { --tone: var(--vscode-charts-yellow, #cca700); }
+.atomic-ticket [data-tone="review"] { --tone: var(--vscode-charts-purple, #b180d7); }
+.atomic-ticket [data-tone="planned"] { --tone: var(--vscode-charts-blue, #3794ff); }
+.atomic-ticket [data-tone="blocked"], .atomic-ticket [data-tone="high"] { --tone: var(--vscode-charts-red, #f14c4c); }
+.atomic-ticket [data-tone="medium"] { --tone: var(--vscode-charts-orange, #d18616); }
+.atomic-ticket [data-tone="low"] { --tone: var(--vscode-charts-blue, #3794ff); }
+.atomic-ticket [data-tone="neutral"] { --tone: var(--ticket-muted); }
+.atomic-ticket-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 600; line-height: 1.3; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap;
+  color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
+}
+.atomic-ticket-pill-small { padding: 1px 8px; font-size: 10px; }
+.atomic-ticket-select { position: relative; display: inline-flex; align-items: center; border-radius: 999px; max-width: 100%;
+  color: var(--tone); background: color-mix(in srgb, var(--tone) 14%, transparent); border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent); }
+.atomic-ticket-select::after { content: ''; position: absolute; right: 10px; top: 50%; width: 5px; height: 5px; margin-top: -4px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); pointer-events: none; }
+.atomic-ticket-select select {
+  appearance: none; -webkit-appearance: none; max-width: 100%;
+  margin: 0; padding: 3px 24px 3px 10px; border: 0; background: transparent; color: inherit;
+  font: inherit; font-size: 11px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; line-height: 1.3; cursor: pointer;
+}
+.atomic-ticket-select select option { text-transform: none; font-weight: 400; color: var(--vscode-dropdown-foreground, var(--ticket-fg)); background: var(--vscode-dropdown-background, var(--ticket-surface)); }
+.atomic-ticket-select:has(select:disabled) { opacity: .6; }
+.atomic-ticket-select select:disabled { cursor: default; }
+.atomic-ticket-select:has(select:focus-visible) { outline: 2px solid var(--ticket-focus); outline-offset: 2px; }
+
+/* Header */
+.atomic-ticket-header { position: relative; padding-bottom: 22px; margin-bottom: 26px; border-bottom: 1px solid var(--ticket-border); }
+.atomic-ticket-breadcrumb { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: var(--ticket-muted); padding-right: 120px; }
+.atomic-ticket-breadcrumb-separator { opacity: .5; }
+.atomic-ticket-top-actions { display: flex; align-items: center; gap: 8px; position: absolute; top: 0; right: 0; }
+.atomic-ticket-title-row { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; }
 .atomic-ticket-title-container { flex: 1; min-width: 0; }
-.atomic-ticket h1.atomic-ticket-title { font: 600 28px/1.3 var(--vscode-font-family, system-ui); margin: 0; letter-spacing: -0.5px; }
-.atomic-ticket-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 40px; }
+.atomic-ticket h1.atomic-ticket-title { font: 600 26px/1.3 var(--vscode-font-family, system-ui); margin: 0; letter-spacing: -0.3px; overflow-wrap: anywhere; }
+.atomic-ticket-title-row > button { margin-top: 5px; }
+.atomic-ticket-meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 14px; font-size: 12px; }
+.atomic-ticket-meta-item { display: inline-flex; align-items: center; gap: 6px; }
+.atomic-ticket-meta-label { color: var(--ticket-muted); }
+
+/* Layout */
+.atomic-ticket-layout { display: grid; grid-template-columns: minmax(0, 1fr) 272px; gap: 40px; }
 .atomic-ticket-main { min-width: 0; }
-.atomic-ticket-sidebar { padding-left: 24px; border-left: 1px solid var(--vscode-panel-border, #444); }
-.atomic-ticket h2 { font-size: 16px; font-weight: 600; margin: 0; }
+.atomic-ticket-sidebar { padding-left: 24px; border-left: 1px solid var(--ticket-border); }
+.atomic-ticket h2 { font-size: 15px; font-weight: 600; margin: 0; }
 .atomic-ticket h3 { font-size: 13px; font-weight: 600; margin: 0; }
 .atomic-ticket-section { margin-bottom: 30px; }
-.atomic-ticket-section-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.atomic-ticket-section-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .atomic-ticket-section-heading > button { margin-left: auto; }
-.atomic-ticket-count { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--vscode-badge-background, #333); color: var(--vscode-badge-foreground, #ccc); }
-.atomic-ticket-card { border: 1px solid var(--vscode-panel-border, #444); border-radius: 7px; margin: 10px 0; overflow: hidden; }
+.atomic-ticket-count { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: var(--vscode-badge-background, #333); color: var(--vscode-badge-foreground, #ccc); }
+.atomic-ticket-section-heading[data-complete] .atomic-ticket-count { background: color-mix(in srgb, var(--vscode-charts-green, #89d185) 20%, transparent); color: var(--vscode-charts-green, #89d185); }
+.atomic-ticket-progress { width: 72px; height: 4px; border: 0; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, var(--ticket-fg) 12%, transparent); accent-color: var(--vscode-charts-green, #89d185); }
+.atomic-ticket-progress::-webkit-progress-bar { background: color-mix(in srgb, var(--ticket-fg) 12%, transparent); border-radius: 999px; }
+.atomic-ticket-progress::-webkit-progress-value { background: var(--vscode-charts-green, #89d185); border-radius: 999px; }
+.atomic-ticket-progress::-moz-progress-bar { background: var(--vscode-charts-green, #89d185); border-radius: 999px; }
+
+/* Cards */
+.atomic-ticket-card { border: 1px solid var(--ticket-border); border-radius: 8px; margin: 10px 0; overflow: hidden; background: color-mix(in srgb, var(--ticket-surface) 55%, var(--vscode-editor-background, #1e1e1e)); }
+.atomic-ticket-card:focus { outline: none; }
 .atomic-ticket-card-highlighted {
-  border-color: var(--vscode-focusBorder, #007fd4);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--vscode-focusBorder, #007fd4) 65%, transparent);
-  background: color-mix(in srgb, var(--vscode-focusBorder, #007fd4) 12%, var(--vscode-editor-background, #1e1e1e));
+  border-color: var(--ticket-focus);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ticket-focus) 65%, transparent);
+  background: color-mix(in srgb, var(--ticket-focus) 12%, var(--vscode-editor-background, #1e1e1e));
 }
-.atomic-ticket-card-head { display: flex; gap: 10px; align-items: center; padding: 10px 14px; background: var(--vscode-sideBar-background, #252526); }
-.atomic-ticket-card-head h3 { margin-right: auto; }
-.atomic-ticket-card-body { padding: 12px 16px; }
+.atomic-ticket-card-head { display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--ticket-border); }
+.atomic-ticket-card-title { display: flex; align-items: baseline; gap: 8px; margin-right: auto; min-width: 0; }
+.atomic-ticket-card-id { font-family: var(--ticket-mono); font-size: 11px; color: var(--ticket-muted); }
+.atomic-ticket-card-body { padding: 14px 16px; }
 .atomic-ticket-prose { overflow-wrap: anywhere; }
 .atomic-ticket-prose > :first-child { margin-top: 0; }
 .atomic-ticket-prose > :last-child { margin-bottom: 0; }
 .atomic-ticket-prose p { margin: 0 0 12px; }
-.atomic-ticket-prose code { font-family: var(--vscode-editor-font-family, monospace); background: var(--vscode-textCodeBlock-background, #333); border-radius: 3px; padding: 1px 4px; }
-.atomic-ticket-prose pre { overflow: auto; padding: 12px; background: var(--vscode-textCodeBlock-background, #252526); }
-.atomic-ticket-prose a { color: var(--vscode-textLink-foreground, #75beff); }
-.atomic-ticket-button, .atomic-ticket-status, .atomic-ticket-detail-select, .atomic-ticket-file {
-  border: 1px solid var(--vscode-panel-border, #555);
-  border-radius: 4px;
-  font: inherit;
-  font-size: 12px;
-  color: inherit;
-  background: var(--vscode-editor-background, #1e1e1e);
-  padding: 5px 10px;
-  cursor: pointer;
+.atomic-ticket-prose code { font-family: var(--ticket-mono); background: var(--ticket-code-bg); border-radius: 3px; padding: 1px 4px; }
+.atomic-ticket-prose pre { overflow: auto; padding: 12px; background: var(--ticket-code-bg); border-radius: 6px; }
+.atomic-ticket-prose a { color: var(--ticket-link); }
+.atomic-ticket-card-links { padding: 0 16px 12px; }
+.atomic-ticket-link { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border: 1px solid var(--ticket-border); border-radius: 999px;
+  background: transparent; color: var(--ticket-link); font: inherit; font-size: 12px; cursor: pointer; max-width: 100%; }
+.atomic-ticket-link:hover:not(:disabled) { border-color: var(--ticket-link); background: color-mix(in srgb, var(--ticket-link) 8%, transparent); }
+.atomic-ticket-link:disabled { color: var(--ticket-muted); cursor: default; }
+.atomic-ticket-files { display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid var(--ticket-border); padding: 10px 14px; }
+.atomic-ticket-file { overflow-wrap: anywhere; max-width: 100%; font-family: var(--ticket-mono); font-size: 11px; color: var(--ticket-fg); }
+.atomic-ticket-file .atomic-ticket-icon { color: var(--ticket-muted); }
+
+/* Evidence */
+.atomic-ticket-evidence { border-top: 1px solid var(--ticket-border); padding: 10px 14px; font-size: 12px; }
+.atomic-ticket-evidence summary, .atomic-ticket-technical summary { cursor: pointer; color: var(--ticket-muted); display: flex; align-items: center; gap: 6px; }
+.atomic-ticket-evidence summary::before, .atomic-ticket-technical summary::before { content: ''; width: 5px; height: 5px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); margin: 0 4px 0 2px; transition: transform .12s ease; }
+.atomic-ticket-evidence[open] summary::before, .atomic-ticket-technical[open] summary::before { transform: rotate(45deg); }
+.atomic-ticket-evidence summary::-webkit-details-marker, .atomic-ticket-technical summary::-webkit-details-marker { display: none; }
+.atomic-ticket-evidence[data-verified] summary { color: var(--vscode-charts-green, #89d185); }
+.atomic-ticket-evidence-body { padding-top: 12px; overflow-wrap: anywhere; }
+.atomic-ticket-evidence-facts { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 8px 12px; margin: 0 0 12px; align-items: start; }
+.atomic-ticket-evidence-facts dt { color: var(--ticket-muted); }
+.atomic-ticket-evidence-facts dd { margin: 0; }
+.atomic-ticket-evidence-facts p { margin: 0; }
+.atomic-ticket-evidence-text { padding: 8px 12px; border-left: 3px solid var(--ticket-border); background: color-mix(in srgb, var(--ticket-fg) 4%, transparent); border-radius: 0 4px 4px 0; white-space: pre-wrap; }
+
+/* Buttons and inputs */
+.atomic-ticket-button, .atomic-ticket-file {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid transparent; border-radius: 4px;
+  font: inherit; font-size: 12px; line-height: 1.4;
+  color: var(--vscode-button-secondaryForeground, var(--ticket-fg));
+  background: var(--vscode-button-secondaryBackground, #333);
+  padding: 5px 10px; cursor: pointer;
 }
-.atomic-ticket-button:hover, .atomic-ticket-file:hover { background: var(--vscode-list-hoverBackground, #333); }
-.atomic-ticket-subtle { border-color: transparent; color: var(--vscode-descriptionForeground, #aaa); }
-.atomic-ticket-primary { background: var(--vscode-button-background, #0052cc); color: var(--vscode-button-foreground, #fff); border-color: transparent; }
+.atomic-ticket-file { border-color: var(--ticket-border); background: transparent; padding: 3px 8px; }
+.atomic-ticket-button:hover:not(:disabled), .atomic-ticket-file:hover:not(:disabled) { background: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground, #3c3c3c)); }
+.atomic-ticket-subtle { background: transparent; color: var(--ticket-muted); }
+.atomic-ticket-subtle:hover:not(:disabled) { color: var(--ticket-fg); background: var(--vscode-list-hoverBackground, #333); }
+.atomic-ticket-icon-button { padding: 5px; }
+.atomic-ticket-primary { background: var(--vscode-button-background, #0052cc); color: var(--vscode-button-foreground, #fff); }
+.atomic-ticket-primary:hover:not(:disabled) { background: var(--vscode-button-hoverBackground, var(--vscode-button-background, #0052cc)); }
 .atomic-ticket :is(button, select):disabled { opacity: .55; cursor: default; }
-.atomic-ticket :is(button, select, input, textarea):focus-visible { outline: 2px solid var(--vscode-focusBorder, #007fd4); outline-offset: 2px; }
-.atomic-ticket-status { max-width: 160px; font-size: 11px; text-transform: uppercase; font-weight: 600; }
-.atomic-ticket-status-met, .atomic-ticket-status-done { color: #74d7ab; }
-.atomic-ticket-badge { font-size: 11px; font-weight: 600; text-transform: uppercase; color: #b3d4ff; background: #164b7944; border-radius: 4px; padding: 5px 10px; }
-.atomic-ticket-badge-done { color: #74d7ab; background: #145a3844; }
-.atomic-ticket-files { display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid var(--vscode-panel-border, #444); padding: 10px 14px; }
-.atomic-ticket-file { overflow-wrap: anywhere; max-width: 100%; font-family: var(--vscode-editor-font-family, monospace); font-size: 11px; }
-.atomic-ticket-link { display: block; margin: 0 16px 10px; padding: 0; border: 0; background: transparent; color: var(--vscode-textLink-foreground, #75beff); font: inherit; font-size: 12px; cursor: pointer; }
-.atomic-ticket-evidence { border-top: 1px solid var(--vscode-panel-border, #444); padding: 10px 14px; font-size: 12px; }
-.atomic-ticket-evidence summary, .atomic-ticket-technical summary { cursor: pointer; color: var(--vscode-descriptionForeground, #aaa); }
-.atomic-ticket-evidence-body { padding-top: 10px; overflow-wrap: anywhere; }
-.atomic-ticket-evidence-body p { margin: 0 0 10px; }
-.atomic-ticket-details { margin-bottom: 26px; }
-.atomic-ticket-details h2 { margin-bottom: 12px; font-size: 13px; }
-.atomic-ticket-fields { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 12px; align-items: start; margin: 0; font-size: 12px; }
-.atomic-ticket-fields dt { color: var(--vscode-descriptionForeground, #999); }
-.atomic-ticket-fields dd { margin: 0; overflow-wrap: anywhere; }
-.atomic-ticket-detail-select { width: 100%; max-width: 100%; padding: 3px 6px; }
-.atomic-ticket-muted { color: var(--vscode-descriptionForeground, #999); font-size: 12px; }
-.atomic-ticket-sidebar p { font-size: 12px; margin: 4px 0 12px; }
-.atomic-ticket-trust { padding: 14px; background: var(--vscode-sideBar-background, #252526); border-radius: 6px; }
-.atomic-ticket-technical { font-size: 12px; overflow-wrap: anywhere; }
-.atomic-ticket-technical > div { margin-top: 12px; }
-.atomic-ticket-footer { font-size: 11px; color: var(--vscode-descriptionForeground, #999); padding-top: 24px; border-top: 1px solid var(--vscode-panel-border, #444); margin-top: 20px; }
+.atomic-ticket :is(button, select, input, textarea):focus-visible { outline: 2px solid var(--ticket-focus); outline-offset: 2px; }
 .atomic-ticket-input { display: block; width: 100%; padding: 8px 10px; border: 1px solid var(--vscode-input-border, #555); background: var(--vscode-input-background, #252526); color: var(--vscode-input-foreground, #ddd); border-radius: 4px; font: inherit; }
 .atomic-ticket-input:is(textarea) { min-height: 120px; resize: vertical; }
-.atomic-ticket-edit-actions { display: flex; gap: 8px; margin-top: 10px; }
+.atomic-ticket-input:focus { outline: 1px solid var(--ticket-focus); border-color: var(--ticket-focus); }
+
+/* Sidebar */
+.atomic-ticket-details { margin-bottom: 24px; }
+.atomic-ticket-details h2 { margin-bottom: 10px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ticket-muted); }
+.atomic-ticket-fields { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px 12px; align-items: center; margin: 0; font-size: 12px; }
+.atomic-ticket-fields dt { color: var(--ticket-muted); }
+.atomic-ticket-fields dd { margin: 0; overflow-wrap: anywhere; min-width: 0; }
+.atomic-ticket-sidebar p { font-size: 12px; margin: 2px 0 10px; }
+.atomic-ticket-relative { color: var(--ticket-fg); }
+.atomic-ticket-trust-row { display: flex; align-items: center; gap: 8px; margin: 0 0 2px; }
+.atomic-ticket-trust-dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--ticket-muted); flex: none; }
+.atomic-ticket-trust p.atomic-ticket-muted { margin-top: 0; }
+.atomic-ticket-technical { font-size: 12px; overflow-wrap: anywhere; }
+.atomic-ticket-technical > div { margin-top: 12px; }
+.atomic-ticket-technical p { margin: 2px 0 0; }
+.atomic-ticket-footer { font-size: 11px; color: var(--ticket-muted); padding-top: 20px; border-top: 1px solid var(--ticket-border); margin-top: 12px; }
+
+/* Inline editing */
+.atomic-ticket-edit-form { border: 1px solid var(--ticket-focus); border-radius: 6px; padding: 10px; background: color-mix(in srgb, var(--ticket-focus) 5%, transparent); }
+.atomic-ticket-edit-actions { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.atomic-ticket-edit-hint { margin-left: auto; font-size: 11px; color: var(--ticket-muted); }
 .atomic-ticket-edit-notice { font-size: 12px; color: var(--vscode-editorWarning-foreground, #e2b14f); }
-.atomic-ticket-evidence-fields label { display: block; margin-bottom: 12px; font-size: 12px; }
-.atomic-ticket-prose-editor { border: 1px solid var(--vscode-focusBorder, #007fd4); border-radius: 4px; }
-.atomic-ticket-prose-editor .cm-editor { height: auto; min-height: 120px; font-size: 13px; }
+.atomic-ticket-edit-notice:empty { display: none; }
+.atomic-ticket-edit-notice:not(:empty) { margin-top: 8px; }
+.atomic-ticket-evidence-fields label { display: block; margin-bottom: 12px; font-size: 12px; color: var(--ticket-muted); }
+.atomic-ticket-evidence-fields .atomic-ticket-input { margin-top: 4px; }
+.atomic-ticket-prose-editor { border: 1px solid var(--vscode-input-border, #555); border-radius: 4px; background: var(--vscode-input-background, #252526); }
+.atomic-ticket-prose-editor .cm-editor { height: auto; min-height: 120px; font-size: 14px; background: transparent; }
+.atomic-ticket .atomic-ticket-prose-editor .cm-editor :is(.cm-scroller, .cm-content, .cm-line) { font-family: var(--vscode-font-family, system-ui, sans-serif); font-size: 14px; line-height: 1.6; color: var(--vscode-input-foreground, var(--ticket-fg)); }
+.atomic-ticket .atomic-ticket-prose-editor .cm-editor .cm-scroller { background: transparent; padding-right: 0; }
 .atomic-ticket-prose-editor .cm-content { min-height: 120px; padding: 10px; }
+.atomic-ticket-prose-editor .cm-editor.cm-focused { outline: none; }
 .atomic-ticket[data-editing] .atomic-ticket-top-actions button { opacity: .5; pointer-events: none; }
+
 @media (max-width: 850px) {
   .atomic-ticket { padding: 24px; }
   .atomic-ticket-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  .atomic-ticket-sidebar { border-left: 0; padding-left: 0; border-top: 1px solid var(--vscode-panel-border, #444); padding-top: 20px; }
+  .atomic-ticket-sidebar { border-left: 0; padding-left: 0; border-top: 1px solid var(--ticket-border); padding-top: 20px; }
   .atomic-ticket-breadcrumb { padding-right: 0; }
   .atomic-ticket-top-actions { position: static; margin-top: 12px; }
-  .atomic-ticket h1.atomic-ticket-title { font-size: 24px; }
+  .atomic-ticket h1.atomic-ticket-title { font-size: 22px; }
 }
