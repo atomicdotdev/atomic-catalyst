@@ -2,13 +2,14 @@ import type { ChangeEvidence } from '../../src/shared/atomicEvidence';
 import { type ImpactEdge, type ImpactFile, type ImpactMode, dependentNote, dependentsHeading, describeEdited, plural, reasonsFor, symbolFor } from './blastRadiusModel';
 
 /** The readable half of the blast radius: every affected file with its structural reason, grouped or narrowed to one cell. */
-export type ListContext = { change: ChangeEvidence; files: readonly ImpactFile[]; edges: readonly ImpactEdge[]; mode: ImpactMode;
+export type ListContext = { change: ChangeEvidence; files: readonly ImpactFile[]; directories: readonly ImpactFile[]; edges: readonly ImpactEdge[]; mode: ImpactMode;
   openDiff?: (path: string) => void; live: () => boolean };
 export type ListSelection = { title: string; files: readonly ImpactFile[] };
 
 const GROUP_LIMIT = 25;
 const CELL_LIMIT = 400;
 const UNKNOWN_NOTE = 'Structural analysis unavailable; this is not proof of zero impact.';
+const PARTIAL_NOTE = 'Structural analysis covered only part of this change. No dependents found is not proof of zero impact.';
 const NARROW_HINT = 'press a cell in the matrix to narrow';
 
 export function renderFileList(drill: HTMLElement, context: ListContext, selection: ListSelection | undefined, showAll: () => void): void {
@@ -47,8 +48,15 @@ export function renderFileList(drill: HTMLElement, context: ListContext, selecti
     return;
   }
   const edited = context.files.filter((file) => file.hop === 1), dependents = context.files.filter((file) => file.hop === 2);
-  const groups: Node[] = [heading(`Edited directly · ${edited.length}`), list(edited, GROUP_LIMIT, false, NARROW_HINT), heading(dependentsHeading(dependents.length, context.mode))];
+  const groups: Node[] = [heading(`Edited directly · ${edited.length}`), list(edited, GROUP_LIMIT, false, NARROW_HINT)];
+  if (context.directories.length) {
+    const created = context.directories.every((dir) => symbolFor(context.change, dir.path) === '📁+');
+    groups.push(heading(`${created ? 'Directories created' : 'Directories'} · ${context.directories.length}`, 'blast-group-title blast-dirs-title'),
+      el('p', context.directories.map((dir) => dir.path).join(' · '), 'blast-dirs'));
+  }
+  groups.push(heading(dependentsHeading(dependents.length, context.mode)));
   if (context.mode === 'unavailable') groups.push(el('p', UNKNOWN_NOTE, 'blast-drill-note'));
   else if (dependents.length) groups.push(list(dependents, GROUP_LIMIT, false, NARROW_HINT));
+  else if (context.mode === 'partial') groups.push(el('p', PARTIAL_NOTE, 'blast-drill-note'));
   drill.replaceChildren(...groups);
 }

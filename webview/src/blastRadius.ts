@@ -2,7 +2,7 @@ import type { ChangeEvidence } from '../../src/shared/atomicEvidence';
 import { displayChangeHash } from '../../src/shared/atomicHash';
 import { mountDependencyGraph, type DependencyGraph } from './atomicDependencyGraph';
 import { renderFileList, type ListSelection } from './blastRadiusList';
-import { type CellSelection, type ImpactEdge, type ImpactFile, type ImpactMode, filterFiles, groupByModule, summarize } from './blastRadiusModel';
+import { type CellSelection, type ImpactEdge, type ImpactFile, type ImpactMode, filterFiles, groupByModule, partitionEntries, summarize } from './blastRadiusModel';
 
 const GRAPH_NODE_LIMIT = 100;
 const MODE_TEXT: Record<ImpactMode, string> = { structural: 'structural (KG)', private: 'structural · private change',
@@ -21,7 +21,8 @@ export function mountBlastRadius(parent: HTMLElement, change: ChangeEvidence, ac
   const impact = change.blastRadius;
   const known = impact && impact.mode !== 'unavailable';
   const mode: ImpactMode = known ? impact.mode : 'unavailable';
-  const files: readonly ImpactFile[] = known ? impact.files : [...new Set(change.affectedPaths || [])].map((path) => ({ path, hop: 1 as const }));
+  const entries: readonly ImpactFile[] = known ? impact.files : [...new Set(change.affectedPaths || [])].map((path) => ({ path, hop: 1 as const }));
+  const { files, directories } = partitionEntries(change, entries);
   const edges = impact?.edges ?? [];
   const hops = files.some((file) => file.hop === 2) ? [1, 2] as const : [1] as const;
 
@@ -40,20 +41,22 @@ export function mountBlastRadius(parent: HTMLElement, change: ChangeEvidence, ac
   const matrix = el('div', undefined, 'blast-matrix');
   const drill = el('section', undefined, 'blast-drill'); drill.setAttribute('aria-live', 'polite'); drill.setAttribute('aria-label', 'Affected files');
   const controls: HTMLButtonElement[] = [];
-  const listContext = { change, files, edges, mode, openDiff, live };
+  const listContext = { change, files, directories, edges, mode, openDiff, live };
   function show(selection?: ListSelection & { cell?: CellSelection }, button?: HTMLButtonElement) {
     selected = selection?.cell;
     controls.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
     matrix.dataset.filtered = String(Boolean(selection?.cell));
     renderFileList(drill, listContext, selection, () => show());
   }
+  matrix.dataset.single = String(hops.length === 1);
   matrix.append(buildMatrix(el, groupByModule(files), hops, (cell, button) => {
     if (!live()) return;
     const same = selected?.module === cell.module && selected?.hop === cell.hop;
     same ? show() : show({ title: `${cell.module} · hop ${cell.hop}`, files: filterFiles(files, cell), cell }, button);
   }, controls));
   if (!files.length) matrix.append(el('p', known ? 'No affected paths returned for this change.' : 'Direct paths unavailable; this is not proof of zero impact.', 'blast-note'));
-  matrix.append(buildLegend(el, hops.length > 1));
+  // With hop 2 present the proximity legend explains two colours; with hop 1 alone the column header already says it.
+  if (hops.length > 1) matrix.append(buildLegend(el, true));
   body.append(matrix, drill);
   show();
 
@@ -74,11 +77,17 @@ export function mountBlastRadius(parent: HTMLElement, change: ChangeEvidence, ac
 
 function buildMatrix(el: Make, rows: [string, readonly ImpactFile[]][], hops: readonly (1 | 2)[],
   onCell: (cell: CellSelection, button: HTMLButtonElement) => void, controls: HTMLButtonElement[]): HTMLTableElement {
-  const table = el('table'); table.setAttribute('aria-label', 'Affected files by module and hop');
-  const head = el('thead'), headRow = el('tr'); headRow.append(el('th', 'module \\ hop'));
-  for (const hop of hops) headRow.append(el('th', `hop ${hop}`));
-  headRow.append(el('th', 'total')); head.append(headRow); table.append(head);
+  const single = hops.length === 1;
+  const table = el('table'); table.setAttribute('aria-label', single ? 'Edited files by module' : 'Affected files by module and hop');
+  const head = el('thead'), headRow = el('tr'); headRow.append(el('th', single ? 'module' : 'module \\ hop'));
+  for (const hop of hops) headRow.append(el('th', single ? 'hop 1 · edited directly' : `hop ${hop}`));
+  if (!single) headRow.append(el('th', 'total'));
+  head.append(headRow); table.append(head);
   const tbody = el('tbody'); const maxTotal = Math.max(1, ...rows.map(([, group]) => group.length));
+  const shareBar = (module: string, count: number, className: string) => {
+    const bar = el('progress', undefined, className); bar.max = maxTotal; bar.value = count;
+    bar.setAttribute('aria-label', `${module}: ${count} affected files`); return bar;
+  };
   for (const [module, group] of rows) {
     const row = el('tr'); const name = el('th', module); name.scope = 'row'; row.append(name);
     for (const hop of hops) {
@@ -87,10 +96,13 @@ function buildMatrix(el: Make, rows: [string, readonly ImpactFile[]][], hops: re
       const button = el('button', String(records.length), `blast-cell hop-${hop}`); button.type = 'button';
       button.setAttribute('aria-label', `${module}, hop ${hop}: ${records.length} files`); button.setAttribute('aria-pressed', 'false');
       button.addEventListener('click', () => onCell({ module, hop }, button));
-      controls.push(button); cell.append(button); row.append(cell);
+      controls.push(button); cell.append(button);
+      // One hop: the share bar sits beside the count instead of a separate total column that would repeat it.
+      if (single) cell.append(shareBar(module, records.length, 'blast-share'));
+      row.append(cell);
     }
-    const total = el('td', undefined, 'blast-total'); const bar = el('progress'); bar.max = maxTotal; bar.value = group.length;
-    bar.setAttribute('aria-label', `${module}: ${group.length} affected files`); total.append(bar, el('span', String(group.length))); row.append(total); tbody.append(row);
+    if (!single) { const total = el('td', undefined, 'blast-total'); total.append(shareBar(module, group.length, ''), el('span', String(group.length))); row.append(total); }
+    tbody.append(row);
   }
   table.append(tbody);
   return table;

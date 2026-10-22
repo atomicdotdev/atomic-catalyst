@@ -26,11 +26,11 @@ describe('blast radius model', () => {
   test('summary and heading never present unknown or partial analysis as zero', () => {
     expect(summarize(files, 'structural')).toBe('3 files edited · 3 dependents in 3 modules');
     expect(summarize(files.filter((file) => file.hop === 1), 'private')).toBe('3 files edited · no dependents found');
-    expect(summarize(files.filter((file) => file.hop === 1), 'partial')).toBe('3 files edited · no dependents found · partial coverage');
+    expect(summarize(files.filter((file) => file.hop === 1), 'partial')).toBe('3 files edited · no dependents found');
     expect(summarize([{ path: 'a.md', hop: 1 }], 'unavailable')).toBe('1 file edited · dependents unknown');
     expect(dependentsHeading(3, 'structural')).toBe('Callers & importers · 3');
     expect(dependentsHeading(0, 'private')).toBe('Callers & importers · none found');
-    expect(dependentsHeading(0, 'partial')).toBe('Callers & importers · none found · partial coverage');
+    expect(dependentsHeading(0, 'partial')).toBe('Callers & importers · none found');
     expect(dependentsHeading(0, 'unavailable')).toBe('Callers & importers · unknown');
   });
   test('filtering by module and hop is pure', () => {

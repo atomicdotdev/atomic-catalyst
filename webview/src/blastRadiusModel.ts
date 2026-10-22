@@ -47,24 +47,34 @@ export function describeEdited(path: string, edges: readonly ImpactEdge[]): stri
   return ['edited directly', dependentNote(path, edges)].filter(Boolean).join(' · ');
 }
 
-const coverageSuffix = (mode: ImpactMode) => (mode === 'partial' ? ' · partial coverage' : '');
-
-/** One honest sentence: unknown or partial analysis is never presented as zero impact. */
+/** One honest sentence; coverage caveats live in the mode label and the dependents note, not repeated here. */
 export function summarize(files: readonly ImpactFile[], mode: ImpactMode): string {
   const edited = files.filter((file) => file.hop === 1).length;
   const dependents = files.filter((file) => file.hop === 2);
   const head = `${plural(edited, 'file')} edited`;
   if (mode === 'unavailable') return `${head} · dependents unknown`;
-  if (!dependents.length) return `${head} · no dependents found${coverageSuffix(mode)}`;
+  if (!dependents.length) return `${head} · no dependents found`;
   const modules = new Set(dependents.map((file) => moduleOf(file.path))).size;
-  return `${head} · ${plural(dependents.length, 'dependent')} in ${plural(modules, 'module')}${coverageSuffix(mode)}`;
+  return `${head} · ${plural(dependents.length, 'dependent')} in ${plural(modules, 'module')}`;
 }
 
 export function dependentsHeading(count: number, mode: ImpactMode): string {
   const base = 'Callers & importers';
   if (mode === 'unavailable') return `${base} · unknown`;
-  if (!count) return `${base} · none found${coverageSuffix(mode)}`;
+  if (!count) return `${base} · none found`;
   return `${base} · ${count}`;
+}
+
+/** The native graph summary marks directories with a folder symbol; nothing else in the evidence says what a path is. */
+export function isDirectory(change: Pick<ChangeEvidence, 'metadata'>, path: string): boolean {
+  return symbolFor(change, path).startsWith('📁');
+}
+
+/** Directories are recorded alongside files but are not edited files: keep them apart for counts, cells and lists. */
+export function partitionEntries(change: Pick<ChangeEvidence, 'metadata'>, entries: readonly ImpactFile[]): { files: ImpactFile[]; directories: ImpactFile[] } {
+  const files: ImpactFile[] = [], directories: ImpactFile[] = [];
+  for (const entry of entries) (isDirectory(change, entry.path) ? directories : files).push(entry);
+  return { files, directories };
 }
 
 export function filterFiles(files: readonly ImpactFile[], selection?: CellSelection): readonly ImpactFile[] {

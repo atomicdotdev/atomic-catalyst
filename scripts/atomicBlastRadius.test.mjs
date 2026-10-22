@@ -105,6 +105,35 @@ describe('Blast-radius file list is visible by default and the matrix filters it
     expect(root.querySelector('.blast-show-all')).toBeNull();
     window.happyDOM.abort();
   });
+  test('directories recorded by the native graph are listed apart and never counted as edited files', () => {
+    const files = [{ path: '.vault/intents', hop: 1 }, { path: '.vault/intents/X', hop: 1 }, { path: '.vault/intents/X/intent.md', hop: 1 }, { path: 'hello.py', hop: 1 }];
+    const paths = files.map((file) => file.path);
+    const selection = { ...change(), affectedPaths: paths,
+      blastRadius: { mode: 'partial', context: 'Partial KG coverage.', warnings: [], files, edges: [] },
+      metadata: { usage: [], affectedPaths: paths, warnings: [], graphSummary: { verticesAdded: '4', edgesChanged: '0', contentBytes: '9', filesChanged: '4', files: [
+        { symbol: '📁+', path: '.vault/intents', info: '(+2 vertices: name, inode)' }, { symbol: '📁+', path: '.vault/intents/X', info: '(+2 vertices: name, inode)' },
+        { symbol: '±', path: '.vault/intents/X/intent.md', info: '(43 hunks)' }, { symbol: '+', path: 'hello.py', info: '(3 hunks)' }] } } };
+    const { window, root } = mount(selection);
+    expect(root.querySelector('.blast-summary').textContent).toBe('2 files edited · no dependents found');
+    const labels = [...root.querySelectorAll('.blast-cell')].map((node) => node.getAttribute('aria-label'));
+    expect(labels).toHaveLength(2);
+    expect(labels).toEqual(expect.arrayContaining(['.vault, hop 1: 1 files', '(root), hop 1: 1 files']));
+    expect(root.querySelector('.blast-legend')).toBeNull();
+    expect([...root.querySelectorAll('.blast-matrix th')].map((th) => th.textContent)).not.toContain('total');
+    const drill = root.querySelector('.blast-drill').textContent;
+    expect(drill).toContain('Edited directly · 2');
+    expect(drill).toContain('Directories created · 2');
+    expect(drill).toContain('.vault/intents/X');
+    expect(drill).toContain('Callers & importers · none found');
+    expect(drill).not.toContain('none found · partial coverage');
+    expect(drill).toContain('not proof of zero impact');
+    expect(root.querySelector('.blast-dirs').textContent).not.toContain('📁');
+    window.happyDOM.abort();
+    const full = mount(change());
+    expect(full.root.querySelector('.blast-legend')).not.toBeNull();
+    expect([...full.root.querySelectorAll('.blast-matrix th')].map((th) => th.textContent)).toContain('total');
+    full.window.happyDOM.abort();
+  });
   test('missing analysis lists dependents as unknown and groups top-level files under (root)', () => {
     const missing = change(); delete missing.blastRadius;
     const { window, root } = mount(missing);

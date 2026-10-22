@@ -3,6 +3,7 @@ import { readAtomicWhy } from './helpers/atomicIntentDocument';
 import { formatRecordedCost, formatTokens, summarizeRecordedUsage } from './recordedUsage';
 import { displayChangeHash } from '../../src/shared/atomicHash';
 import { mountBlastRadius } from './blastRadius';
+import { plural } from './blastRadiusModel';
 import { intentReferences } from '../../src/shared/changeIntentContext';
 
 /** Atomic's text-first change report. Native tree navigation owns selection. */
@@ -45,9 +46,10 @@ export function mountAtomicGraph(root: HTMLElement, send: (message: unknown) => 
   }
   function fileRow(change: ChangeEvidence, symbol: string | undefined, path: string, info?: string): HTMLElement {
     const row = el('p', undefined, 'native-line native-indent file-summary');
+    row.dataset.kind = symbol?.startsWith('📁') ? 'directory' : 'file';
     if (symbol !== undefined) { const mark = el('span', `${symbol} `, 'file-symbol'); mark.dataset.symbol = symbol; row.append(mark); }
     row.append(fileLink(change, path));
-    if (info !== undefined) row.append(doc.createTextNode(' '), el('span', info, 'muted'));
+    if (info !== undefined) row.append(doc.createTextNode(' '), el('span', info, 'file-info muted'));
     return row;
   }
   function renderHeading(change: ChangeEvidence) {
@@ -85,7 +87,9 @@ export function mountAtomicGraph(root: HTMLElement, send: (message: unknown) => 
     const graph = change.metadata?.graphSummary;
     if (graph) {
       line(files, `Graph: +${graph.verticesAdded} vertices, ~${graph.edgesChanged} edges, ${graph.contentBytes} bytes`, 'graph-summary');
-      line(files, `Files changed: ${graph.filesChanged}`);
+      const header = el('p', `Files changed: ${graph.filesChanged}`, 'native-line'); files.append(header);
+      const directories = graph.files.filter((file) => file.symbol.startsWith('📁')).length;
+      if (directories) header.append(el('span', ` (${plural(graph.files.length - directories, 'file')} · ${plural(directories, 'directory', 'directories')})`, 'file-kinds muted'));
       for (const file of graph.files) files.append(fileRow(change, file.symbol, file.path, file.info));
     } else {
       line(files, 'Graph summary unavailable. Use a compatible Atomic runtime and nodeatomic consumer.', 'muted');

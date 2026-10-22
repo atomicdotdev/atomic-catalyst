@@ -61,7 +61,19 @@ code { font: inherit; }
 .section-rule { color: color-mix(in srgb, var(--atomic-muted) 45%, transparent); font-weight: 400; }
 .native-indent { padding-left: 2ch; }
 .dependency-hash { color: var(--atomic-muted); }
+/* Native file list: marker | path, with the recorded hunk text as a muted second line; directories recede. */
+.file-summary { display: grid; grid-template-columns: 3ch minmax(0, 1fr); column-gap: 8px; align-items: baseline; }
+.file-summary .file-info { grid-column: 2; font-size: 11px; margin: -1px 0 3px; }
+.file-summary[data-kind="directory"] { grid-template-columns: 3ch auto minmax(0, 1fr); }
+.file-summary[data-kind="directory"] .file-info { grid-column: auto; margin: 0; }
+.file-summary[data-kind="directory"] .impact-path { color: var(--atomic-muted); font-weight: 400; }
+.file-summary[data-kind="directory"] .impact-path::after { content: 'dir'; margin-left: 6px; padding: 0 5px; border: 1px solid var(--atomic-border); border-radius: 3px; font-size: 10px; color: var(--atomic-muted); }
+.file-kinds { font-size: 11px; }
+button.impact-path::after, button.blast-file-diff::after { content: ' ↗'; color: var(--atomic-muted); font-weight: 400; }
 .file-symbol { display: inline-block; min-width: 2ch; font-weight: 700; }
+.file-symbol[data-symbol^="📁"] { font-size: 0; }
+.file-symbol[data-symbol^="📁"]::before { content: '+'; font-size: var(--atomic-mono-size); color: var(--atomic-green); }
+.file-symbol[data-symbol="📁-"]::before { content: '-'; color: var(--atomic-red); }
 .file-symbol[data-symbol="+"] { color: var(--atomic-green); }
 .file-symbol[data-symbol="-"] { color: var(--atomic-red); }
 .file-symbol[data-symbol="~"], .file-symbol[data-symbol="±"], .file-symbol[data-symbol="M"] { color: var(--atomic-yellow); }
@@ -131,10 +143,17 @@ button.blast-cell:hover, button.blast-cell[aria-pressed="true"] { box-shadow: 0 
 .blast-matrix[data-filtered="true"] button.blast-cell[aria-pressed="false"]:hover { opacity: 1; }
 .blast-zero { color: var(--atomic-muted); opacity: .6; }
 .blast-total { white-space: nowrap; color: var(--atomic-muted); }
-.blast-total progress { width: 64px; height: 4px; border: 0; border-radius: 4px; background: color-mix(in srgb, var(--atomic-fg) 12%, transparent); accent-color: var(--atomic-impact-direct); vertical-align: middle; margin: 0 14px 0 8px; }
-.blast-total progress::-webkit-progress-bar { background: color-mix(in srgb, var(--atomic-fg) 12%, transparent); border-radius: 4px; }
-.blast-total progress::-webkit-progress-value { background: var(--atomic-impact-direct); border-radius: 4px; }
-.blast-total progress::-moz-progress-bar { background: var(--atomic-impact-direct); border-radius: 4px; }
+.blast-matrix progress { width: 64px; height: 4px; border: 0; border-radius: 4px; background: color-mix(in srgb, var(--atomic-fg) 12%, transparent); accent-color: var(--atomic-impact-direct); vertical-align: middle; margin: 0 14px 0 8px; }
+.blast-matrix progress::-webkit-progress-bar { background: color-mix(in srgb, var(--atomic-fg) 12%, transparent); border-radius: 4px; }
+.blast-matrix progress::-webkit-progress-value { background: var(--atomic-impact-direct); border-radius: 4px; }
+.blast-matrix progress::-moz-progress-bar { background: var(--atomic-impact-direct); border-radius: 4px; }
+/* One hop only: compact count chips with a share bar beside them; no total column, no legend. */
+.blast-matrix[data-single="true"] thead th:not(:first-child), .blast-matrix[data-single="true"] td { text-align: left; padding-left: 0; }
+.blast-matrix[data-single="true"] td { white-space: nowrap; }
+.blast-matrix[data-single="true"] button.blast-cell { display: inline-block; min-width: 3ch; height: 20px; padding: 0 8px; font-size: 11px; border-radius: 3px; vertical-align: middle; }
+.blast-matrix[data-single="true"] progress.blast-share { width: 90px; margin: 0 0 0 10px; }
+.blast-dirs-title { color: var(--atomic-muted); }
+.blast-dirs { margin: 0 0 12px; font-size: 11px; color: var(--atomic-muted); overflow-wrap: anywhere; }
 .blast-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin: 14px 0 4px; color: var(--atomic-muted); font-size: 11px; }
 .blast-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -2px; }
 .blast-swatch.hop-1 { background: var(--atomic-impact-direct); }
