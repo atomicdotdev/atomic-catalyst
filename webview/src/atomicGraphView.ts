@@ -110,14 +110,21 @@ export function mountAtomicGraph(root: HTMLElement, send: (message: unknown) => 
     fact(totals, 'Cost', usage.costMicroUsd != null ? `${formatRecordedCost(usage.costMicroUsd)} USD` : 'Not recorded', usage.costMicroUsd != null ? 'native-value' : 'muted');
     return usage;
   }
+  /** One ledger entry on a quiet timeline: marker | kind | label | tool + duration, then the detail under the label. */
   function activityRow(node: EvidenceNode): HTMLElement {
     const row = el('div', undefined, 'activity-row'); row.dataset.nodeId = node.id; row.dataset.kind = node.kind;
+    const mark = el('span', undefined, 'activity-mark'); mark.setAttribute('aria-hidden', 'true');
     const summary = el('p', undefined, 'activity-summary');
-    summary.append(el('span', node.kind, 'activity-kind'), el('span', ' » ', 'muted'), doc.createTextNode(node.label));
-    if (node.toolName) summary.append(el('span', ` [${node.toolName}]`, 'muted'));
-    if (node.durationMs != null) summary.append(el('span', ` ${node.durationMs} ms`, 'activity-duration'));
-    row.append(summary);
-    if (node.detail) row.append(el('pre', actionDetail(node.detail, node.toolName), 'activity-detail'));
+    summary.append(el('span', node.kind, 'activity-kind'), el('span', ' » ', 'activity-sep muted'), el('span', node.label, 'activity-label'));
+    const meta = el('span', undefined, 'activity-meta');
+    if (node.toolName) meta.append(el('span', ` [${node.toolName}]`, 'muted'));
+    if (node.durationMs != null) meta.append(el('span', ` ${node.durationMs} ms`, 'activity-duration'));
+    if (meta.childElementCount) summary.append(meta);
+    row.append(mark, summary);
+    const detail = node.detail ? actionDetail(node.detail, node.toolName) : '';
+    // A command that merely repeats the label is shown once, as the label with a prompt.
+    if (detail === `$ ${node.label}`) row.dataset.command = 'true';
+    else if (detail) row.append(el('pre', detail, 'activity-detail'));
     return row;
   }
   function ledgerNodeMetadata(node: EvidenceNode, ledger: ProvenanceEvidence): HTMLElement | undefined {
@@ -260,6 +267,8 @@ function actionDetail(detail: string, tool?: string): string {
       const record = value as Record<string, unknown>;
       if (typeof record.command === 'string') return `$ ${record.command}`;
       if (typeof record.path === 'string') return `${tool === 'edit' ? 'edit: ' : ''}${record.path}`;
+      const files = record.files;
+      if (Array.isArray(files) && files.length && files.every((file) => typeof file === 'string')) return files.join('\n');
     }
   } catch { /* Plain-text details are already display-ready. */ }
   return detail;

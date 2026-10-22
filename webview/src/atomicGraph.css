@@ -72,17 +72,24 @@ button.impact-path:hover, .blast-file-diff:hover { color: var(--atomic-link); te
 
 /* Ledger */
 .ledger-facts { margin-bottom: 10px; }
-.ledger-actions { margin: 4px 0 0; }
-.activity-row { margin: 0 0 3px; padding: 3px 0 3px 12px; border-left: 3px solid var(--kind, var(--atomic-muted)); }
-.activity-row[data-kind="goal"] { --kind: var(--atomic-blue); }
-.activity-row[data-kind="exploration"] { --kind: var(--atomic-purple); }
-.activity-row[data-kind="commitment"] { --kind: var(--atomic-orange); }
-.activity-row[data-kind="execution"] { --kind: var(--atomic-green); }
-.activity-row[data-kind="verification"] { --kind: var(--atomic-yellow); }
-.activity-summary { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.activity-kind { font-weight: 700; color: var(--kind, var(--atomic-fg)); }
-.activity-duration { margin-left: auto; font-size: 11px; color: var(--atomic-muted); white-space: nowrap; }
-.activity-detail { margin: 3px 0 0; padding: 2px 8px; width: fit-content; max-width: 100%; border-radius: 3px; background: var(--atomic-code-bg); color: var(--atomic-muted); font-size: 11px; white-space: pre-wrap; overflow-wrap: anywhere; }
+/* Change ledger: one quiet timeline rail; colour marks consequence (something was written), not category. */
+.ledger-actions { position: relative; margin: 4px 0 0; display: flex; flex-direction: column; gap: 2px; padding: 2px 0; }
+.ledger-actions::before { content: ''; position: absolute; left: 7px; top: 10px; bottom: 10px; width: 1px; background: var(--atomic-border); }
+.activity-row { position: relative; display: grid; grid-template-columns: 16px minmax(0, 1fr); column-gap: 10px; align-items: baseline; margin: 0; padding: 3px 0; }
+.activity-mark { width: 7px; height: 7px; margin: 5px 0 0 4px; border: 1.5px solid var(--atomic-muted); border-radius: 50%; background: var(--atomic-bg); align-self: start; }
+.activity-row[data-kind="goal"] .activity-mark { width: 9px; height: 9px; margin: 4px 0 0 3px; border: 0; border-radius: 0; background: var(--atomic-fg); transform: rotate(45deg); }
+.activity-row[data-kind="commitment"] .activity-mark, .activity-row[data-kind="patch_proposal"] .activity-mark { width: 9px; height: 9px; margin: 4px 0 0 3px; border: 0; background: var(--atomic-impact-direct); }
+.activity-row[data-kind="verification"] .activity-mark { width: 9px; height: 9px; margin: 4px 0 0 3px; border: 0; background: var(--atomic-green); }
+.activity-summary { margin: 0; display: grid; grid-template-columns: 14ch minmax(0, 1fr) auto; column-gap: 10px; align-items: baseline; }
+.activity-kind { color: var(--atomic-muted); }
+.activity-sep { display: none; }
+.activity-label { white-space: pre-wrap; overflow-wrap: anywhere; }
+.activity-row[data-command="true"] .activity-label::before { content: '$ '; color: var(--atomic-muted); }
+.activity-row[data-kind="goal"] .activity-label, .activity-row[data-kind="commitment"] .activity-label, .activity-row[data-kind="patch_proposal"] .activity-label,
+.activity-row[data-kind="commitment"] .activity-kind, .activity-row[data-kind="patch_proposal"] .activity-kind { font-weight: 700; color: var(--atomic-fg); }
+.activity-meta { font-size: 11px; color: var(--atomic-muted); white-space: nowrap; }
+.activity-detail { grid-column: 2; margin: 2px 0 0 calc(14ch + 10px); padding: 4px 8px; width: fit-content; max-width: calc(100% - 14ch - 10px); border-radius: 3px; background: var(--atomic-code-bg); color: var(--atomic-muted); font-size: 11px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.activity-row[data-kind="patch_proposal"] .activity-detail { color: var(--atomic-fg); }
 
 /* Collapsible supplements */
 details.native-supplement { margin-top: 14px; padding: 6px 12px; border: 1px solid var(--atomic-border); border-radius: 6px; }
@@ -171,5 +178,6 @@ button.blast-cell:hover, button.blast-cell[aria-pressed="true"] { box-shadow: 0 
 @media (max-width: 720px) {
   body { padding: 0 12px 32px; }
   .blast-drill { border-left: 0; padding-left: 0; border-top: 1px solid var(--atomic-border); padding-top: 10px; }
-  .activity-duration { margin-left: 0; }
+  .activity-summary { grid-template-columns: 14ch minmax(0, 1fr); }
+  .activity-meta { grid-column: 2; white-space: normal; }
 }
