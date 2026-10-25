@@ -401,7 +401,9 @@ class AtomicSourceControl implements vscode.TreeDataProvider<Node>, vscode.Dispo
       const rows: Node[] = history.entries.filter((entry) => !entry.isTagged && entry.hash?.value?.length === 32).map((entry) => {
         const hash = entry.hash!.value!;
         const id = displayChangeHash(Buffer.from(hash).toString('hex'));
-        return { label: id.slice(0, 12), description: entry.message || '(no message)',
+        const subject = (entry.message || '').split(/\r?\n/)[0].trim();
+        // Message first, like other history views; the short hash stays visible as the description.
+        return { label: subject || '(no message)', description: id.slice(0, 12),
           tooltip: `${id}\n${entry.message || ''}`, iconPath: new vscode.ThemeIcon('git-commit'),
           command: { command: 'catalystAtomic.showChange', title: 'Show Change', arguments: [owner, hash, view] } };
       });

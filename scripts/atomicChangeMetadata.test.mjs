@@ -131,3 +131,22 @@ test('webview displays recorded model/token breakdown/cost and inline per-change
   expect(root.querySelector('aside, canvas')).toBeNull();
   window.happyDOM.abort();
 });
+
+test('webview separates directories from files in the native file list without changing the native text', () => {
+  const window = new Window(), root = window.document.createElement('div');
+  const ui = mountAtomicGraph(root, () => {});
+  ui.receive({ type: 'state', state: { view: 'test', workingCopyView: 'test' } });
+  const render = (summary) => ui.receive({ type: 'selection', selection: change(1, { ...metadata(1), graphSummary: summary }) });
+  render(graphSummary({ filesChanged: '3', files: [
+    { symbol: '📁+', path: '.vault/intents', info: '(+2 vertices: name, inode)' },
+    { symbol: '±', path: '.vault/intents/X/intent.md', info: '(43 hunks: 40x +1 span: new content)' },
+    { symbol: '+', path: 'hello.py', info: '(3 hunks: 1x +3 vertices: name, inode, content)' }] }));
+  const rows = [...root.querySelectorAll('.file-summary')];
+  expect(rows.map((row) => row.dataset.kind)).toEqual(['directory', 'file', 'file']);
+  expect(rows[0].textContent).toBe('📁+ .vault/intents (+2 vertices: name, inode)');
+  expect(rows[1].querySelector('.file-info').textContent).toBe('(43 hunks: 40x +1 span: new content)');
+  expect(root.querySelector('.file-kinds').textContent).toContain('2 files · 1 directory');
+  render(graphSummary());
+  expect(root.querySelector('.file-kinds')).toBeNull();
+  window.happyDOM.abort();
+});

@@ -147,6 +147,26 @@ describe('Draft observability data and central presentation', () => {
     expect(root.querySelector('.linked-intent').parentElement.open).toBe(false);
     window.happyDOM.abort();
   });
+  test('ledger rows carry a quiet timeline marker, drop command details that repeat the label, and list patch files', () => {
+    const change = changeEvidence(detail(1), hex(1));
+    const nodes = change.provenance[0].nodes;
+    nodes[0] = { ...nodes[0], kind: 'execution', toolName: 'bash', label: 'atomic status', detail: '{"command":"atomic status"}' };
+    nodes[1] = { ...nodes[1], kind: 'patch_proposal', label: 'Change ABC: 2 files', detail: '{"change_hash":"ABC","files":["src/a.ts","hello.py"]}' };
+    const window = new Window(), root = window.document.createElement('div');
+    const ui = mountAtomicGraph(root, () => {});
+    ui.receive({ type: 'state', state: { view: 'hello-world', workingCopyView: 'main' } });
+    ui.receive({ type: 'selection', selection: change });
+    const rows = [...root.querySelectorAll('.activity-row')];
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+    expect(rows.every((row) => row.firstElementChild.classList.contains('activity-mark') && row.firstElementChild.getAttribute('aria-hidden') === 'true')).toBe(true);
+    expect(rows[0].dataset.kind).toBe('execution');
+    expect(rows[0].dataset.command).toBe('true');
+    expect(rows[0].querySelector('.activity-detail')).toBeNull();
+    expect(rows[0].querySelector('.activity-summary').textContent).toContain('execution » atomic status [bash]');
+    expect(rows[1].dataset.command).toBeUndefined();
+    expect(rows[1].querySelector('.activity-detail').textContent).toBe('src/a.ts\nhello.py');
+    window.happyDOM.abort();
+  });
   test('missing, unique and multiple intent links are explicit without claiming canonical SHACL or reverse uniqueness', () => {
     const window = new Window(), root = window.document.createElement('div');
     const ui = mountAtomicGraph(root, () => {});

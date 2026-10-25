@@ -1,8 +1,9 @@
-import type { ChangeEvidence, ExplorerEvent, ExplorerState, EvidenceSelection } from '../../src/shared/atomicEvidence';
+import type { ChangeEvidence, ExplorerEvent, ExplorerState, EvidenceSelection, EvidenceNode, ProvenanceEvidence } from '../../src/shared/atomicEvidence';
 import { readAtomicWhy } from './helpers/atomicIntentDocument';
 import { formatRecordedCost, formatTokens, summarizeRecordedUsage } from './recordedUsage';
 import { displayChangeHash } from '../../src/shared/atomicHash';
 import { mountBlastRadius } from './blastRadius';
+import { plural } from './blastRadiusModel';
 import { intentReferences } from '../../src/shared/changeIntentContext';
 
 /** Atomic's text-first change report. Native tree navigation owns selection. */
@@ -17,20 +18,23 @@ export function mountAtomicGraph(root: HTMLElement, send: (message: unknown) => 
   const heading = el('span', 'Atomic', 'command-heading');
   const status = el('p', 'Select a change hash beneath a view in the left pane.', 'overview-status'); status.setAttribute('role', 'status');
   const main = el('main', undefined, 'view-overview');
-  function button(label: string, run: () => void) {
+  function button(label: string, run: () => void, className?: string) {
     const owner = state, change = selected;
-    const item = el('button', label); item.type = 'button'; item.addEventListener('click', () => {
+    const item = el('button', label, className); item.type = 'button'; item.addEventListener('click', () => {
       if (label === 'Refresh' || interactive && state === owner && selected === change) run();
     }); return item;
   }
-  header.append(heading, button('Refresh', () => send({ action: 'refresh' })));
+  header.append(heading, button('Refresh', () => send({ action: 'refresh' }), 'toolbar-button'));
   root.replaceChildren(header, status, main);
   function line(parent: HTMLElement, text: string, className = '') { parent.append(el('p', text, `native-line ${className}`)); }
   function fact(parent: HTMLElement, label: string, value: string, className = '') {
     const row = el('dl', undefined, `native-fact ${className}`); row.append(el('dt', `${label}: `), el('dd', value)); parent.append(row);
   }
+  /** Keep the CLI's `=== Title ===` text; only the markers are visually muted. */
   function section(parent: HTMLElement, title: string, className = '') {
-    const item = el('section', undefined, `native-section ${className}`); item.append(el('h2', `=== ${title} ===`)); parent.append(item); return item;
+    const item = el('section', undefined, `native-section ${className}`);
+    const h2 = el('h2'); h2.append(el('span', '===', 'section-rule'), doc.createTextNode(` ${title} `), el('span', '===', 'section-rule'));
+    item.append(h2); parent.append(item); return item;
   }
   function empty(message: string) { blast?.dispose(); blast = undefined; status.hidden = false; main.replaceChildren(el('p', message, 'native-line muted')); }
   function fileLink(change: ChangeEvidence, path: string): HTMLElement {
@@ -40,50 +44,60 @@ export function mountAtomicGraph(root: HTMLElement, send: (message: unknown) => 
     if (link.tagName === 'BUTTON') link.setAttribute('aria-label', `Open diff for ${path}`);
     return link;
   }
-  function renderChange(change: ChangeEvidence) {
-    blast?.dispose(); main.replaceChildren(); status.hidden = true;
-    const owner = state;
-    heading.replaceChildren(el('span', '→ ', 'native-prompt'), el('strong', state?.view || 'Atomic'),
-      doc.createTextNode(`  atomic change ${displayChangeHash(change.id)}`));
-    const report = el('article', undefined, 'change-detail'); main.append(report);
-    line(report, `change ${displayChangeHash(change.id).slice(0, 12)}`, 'muted');
+  function fileRow(change: ChangeEvidence, symbol: string | undefined, path: string, info?: string): HTMLElement {
+    const row = el('p', undefined, 'native-line native-indent file-summary');
+    row.dataset.kind = symbol?.startsWith('📁') ? 'directory' : 'file';
+    if (symbol !== undefined) { const mark = el('span', `${symbol} `, 'file-symbol'); mark.dataset.symbol = symbol; row.append(mark); }
+    row.append(fileLink(change, path));
+    if (info !== undefined) row.append(doc.createTextNode(' '), el('span', info, 'file-info muted'));
+    return row;
+  }
+  function renderHeading(change: ChangeEvidence) {
+    const short = el('code', displayChangeHash(change.id).slice(0, 12), 'hash-short');
+    short.title = displayChangeHash(change.id);
+    heading.replaceChildren(el('span', '→ ', 'native-prompt'), el('strong', state?.view || 'Atomic', 'view-name'), doc.createTextNode('  atomic change '), short);
+  }
+  function renderFacts(report: HTMLElement, change: ChangeEvidence) {
     fact(report, 'Author', change.authors.join(', ') || 'Not recorded');
-    fact(report, 'Date', change.recordedAt ? change.recordedAt.replace('T', ' ').replace(/\.\d{3}Z$/, ' UTC') : 'Not returned by native runtime', 'muted');
+    fact(report, 'Date', change.recordedAt ? change.recordedAt.replace('T', ' ').replace(/\.\d{3}Z$/, ' UTC') : 'Not returned by native runtime', change.recordedAt ? '' : 'muted');
     const intentContext = change.intentContext;
     const typedContext = intentContext && intentContext.status !== 'unavailable' ? intentContext : undefined;
-    const references = intentReferences(change);
     const legacyPlans = intentContext ? [] : [...new Set(change.provenance.flatMap((ledger) => ledger.planId ? [ledger.planId] : []))];
     const planId = typedContext ? typedContext.planId : legacyPlans.length === 1 ? legacyPlans[0] : undefined;
     fact(report, 'Plan ID', planId || (typedContext?.status === 'ambiguous' || !typedContext && legacyPlans.length > 1 ? 'Ambiguous — see recorded references'
       : intentContext?.status === 'unavailable' ? 'Unavailable — native context could not be interpreted'
-      : typedContext?.status === 'partial' ? 'Unresolved — lookup incomplete' : 'Not recorded in returned data'), 'change-plan-id');
+      : typedContext?.status === 'partial' ? 'Unresolved — lookup incomplete' : 'Not recorded in returned data'), planId ? 'change-plan-id' : 'change-plan-id muted');
     const source = typedContext?.plans.find((binding) => binding.planId === planId);
+    if (source?.intent?.title) fact(report, 'Intent', `${source.intent.title} · current vault title`, 'change-intent-title');
     if (source) fact(report, 'Plan source', `${source.source === 'provenance_graph' ? 'Recorded provenance graph' : 'Recorded session turn'}${source.turnNumber != null ? ` ${source.turnNumber} (zero-based)` : ''}`, 'muted');
     if (typedContext?.status === 'partial') fact(report, 'Plan lookup', 'Partial — see plan/intent notes for coverage', 'muted');
     const associated = typedContext?.associatedIntents || [];
     if (associated.length) fact(report, 'Associated intent', `${associated.slice(0, 3).map((item) => item.intent?.id || `${item.path} (identity unavailable)`).join(', ')}${associated.length > 3 ? ` (+${associated.length - 3} more)` : ''} · intent document changed`, 'change-intent-associations');
-    report.append(el('p', change.message, 'change-message'));
-    const dependencies = el('section', undefined, 'native-section'); report.append(dependencies);
-    line(dependencies, `Dependencies: ${change.dependencies.length}`);
-    for (const hash of change.dependencies) line(dependencies, `${displayChangeHash(hash).slice(0, 12)}...`, 'native-indent');
+    return { intentContext, typedContext, legacyPlans, planId };
+  }
+  function renderMessage(report: HTMLElement, message: string) {
+    const [subject, ...rest] = message.split(/\r?\n/);
+    const block = el('p', undefined, 'change-message');
+    block.append(el('span', subject, 'change-subject'));
+    if (rest.length) block.append(doc.createTextNode(`\n${rest.join('\n')}`));
+    report.append(block);
+  }
+  function renderFiles(report: HTMLElement, change: ChangeEvidence) {
     const files = el('section', undefined, 'native-section change-files'); report.append(files);
     const graph = change.metadata?.graphSummary;
     if (graph) {
       line(files, `Graph: +${graph.verticesAdded} vertices, ~${graph.edgesChanged} edges, ${graph.contentBytes} bytes`, 'graph-summary');
-      line(files, `Files changed: ${graph.filesChanged}`);
-      for (const file of graph.files) {
-        const row = el('p', undefined, 'native-line native-indent file-summary');
-        row.append(el('span', `${file.symbol} `), fileLink(change, file.path), doc.createTextNode(' '), el('span', file.info, 'muted'));
-        files.append(row);
-      }
+      const header = el('p', `Files changed: ${graph.filesChanged}`, 'native-line'); files.append(header);
+      const directories = graph.files.filter((file) => file.symbol.startsWith('📁')).length;
+      if (directories) header.append(el('span', ` (${plural(graph.files.length - directories, 'file')} · ${plural(directories, 'directory', 'directories')})`, 'file-kinds muted'));
+      for (const file of graph.files) files.append(fileRow(change, file.symbol, file.path, file.info));
     } else {
       line(files, 'Graph summary unavailable. Use a compatible Atomic runtime and nodeatomic consumer.', 'muted');
       line(files, 'Affected paths (native graph counts unavailable):', 'muted');
-      for (const path of change.affectedPaths || []) { const row = el('p', undefined, 'native-line native-indent file-summary'); row.append(fileLink(change, path)); files.append(row); }
+      for (const path of change.affectedPaths || []) files.append(fileRow(change, undefined, path));
     }
-
-    blast = mountBlastRadius(report, change, () => interactive && state === owner && selected === change,
-      (path) => send({ action: 'openDiff', id: change.id, path }));
+  }
+  function renderAttestationSection(report: HTMLElement, change: ChangeEvidence) {
     const attestation = section(report, 'Attestation', 'draft-metrics');
     for (const record of change.metadata?.usage || []) {
       const detail = el('div', undefined, 'native-indent recorded-usage'); attestation.append(detail);
@@ -95,44 +109,63 @@ export function mountAtomicGraph(root: HTMLElement, send: (message: unknown) => 
     }
     const usage = summarizeRecordedUsage([change]);
     const totals = el('div', undefined, 'native-indent'); attestation.append(totals);
-    fact(totals, 'Tokens', usage.totals ? `${formatTokens(usage.totals.input)} / ${formatTokens(usage.totals.output)} (input / output)` : 'Not available', 'native-value');
+    fact(totals, 'Tokens', usage.totals ? `${formatTokens(usage.totals.input)} / ${formatTokens(usage.totals.output)} (input / output)` : 'Not available', usage.totals ? 'native-value' : 'muted');
     if (usage.totals) fact(totals, 'Cache', `${formatTokens(usage.totals.cacheRead)} / ${formatTokens(usage.totals.cacheWrite)} / ${formatTokens(usage.totals.reasoning)} / ${formatTokens(usage.totals.total)} (read / write / reasoning / total)`, 'native-value');
-    fact(totals, 'Cost', usage.costMicroUsd != null ? `${formatRecordedCost(usage.costMicroUsd)} USD` : 'Not recorded', 'native-value');
-
+    fact(totals, 'Cost', usage.costMicroUsd != null ? `${formatRecordedCost(usage.costMicroUsd)} USD` : 'Not recorded', usage.costMicroUsd != null ? 'native-value' : 'muted');
+    return usage;
+  }
+  /** One ledger entry on a quiet timeline: marker | kind | label | tool + duration, then the detail under the label. */
+  function activityRow(node: EvidenceNode): HTMLElement {
+    const row = el('div', undefined, 'activity-row'); row.dataset.nodeId = node.id; row.dataset.kind = node.kind;
+    const mark = el('span', undefined, 'activity-mark'); mark.setAttribute('aria-hidden', 'true');
+    const summary = el('p', undefined, 'activity-summary');
+    summary.append(el('span', node.kind, 'activity-kind'), el('span', ' » ', 'activity-sep muted'), el('span', node.label, 'activity-label'));
+    const meta = el('span', undefined, 'activity-meta');
+    if (node.toolName) meta.append(el('span', ` [${node.toolName}]`, 'muted'));
+    if (node.durationMs != null) meta.append(el('span', ` ${node.durationMs} ms`, 'activity-duration'));
+    if (meta.childElementCount) summary.append(meta);
+    row.append(mark, summary);
+    const detail = node.detail ? actionDetail(node.detail, node.toolName) : '';
+    // A command that merely repeats the label is shown once, as the label with a prompt.
+    if (detail === `$ ${node.label}`) row.dataset.command = 'true';
+    else if (detail) row.append(el('pre', detail, 'activity-detail'));
+    return row;
+  }
+  function ledgerNodeMetadata(node: EvidenceNode, ledger: ProvenanceEvidence): HTMLElement | undefined {
+    const edges = ledger.edges.filter((edge) => edge.from === node.id || edge.to === node.id);
+    if (!edges.length && node.durationMs == null) return undefined;
+    const extra = el('div', undefined, 'ledger-node-meta');
+    extra.append(el('p', `${node.id} · ${node.kind} » ${node.label}`, 'ledger-node-title muted'));
+    if (node.durationMs != null) fact(extra, 'Duration', `${node.durationMs} ms`);
+    if (edges.length) fact(extra, 'Recorded relationships', edges.map((edge) => `${edge.from} — ${edge.label} → ${edge.to}`).join('\n'));
+    if (node.detail) extra.append(el('pre', node.detail, 'ledger-node-raw'));
+    return extra;
+  }
+  function renderLedger(report: HTMLElement, change: ChangeEvidence) {
     const log = section(report, 'Change Ledger', 'provenance-log');
     for (const ledger of change.provenance) {
       if (!ledger.available) { line(log, ledger.reason || 'Ledger unavailable.', 'muted'); continue; }
-      const info = el('div', undefined, 'native-indent'); log.append(info);
+      const info = el('div', undefined, 'native-indent ledger-facts'); log.append(info);
       fact(info, 'Session', ledger.session || 'Not recorded', 'native-value');
       fact(info, 'Agent', ledger.agent || 'Not recorded', 'native-value');
-      fact(info, 'Plan ID', ledger.planId || 'Not recorded in this ledger', 'muted');
-      line(info, `Nodes:  ${ledger.nodes.length}  Edges: ${ledger.edges.length}`);
-      const actions = el('div', undefined, 'native-supplement'); log.append(actions);
+      fact(info, 'Plan ID', ledger.planId || 'Not recorded in this ledger', ledger.planId ? '' : 'muted');
+      fact(info, 'Nodes', `${ledger.nodes.length}  Edges: ${ledger.edges.length}`);
+      const actions = el('div', undefined, 'ledger-actions'); log.append(actions);
       const metadata = el('details', undefined, 'native-supplement ledger-metadata');
       metadata.append(el('summary', 'Recorded ledger metadata'));
       // Keep the ledger's own order and kind names, including exploration [read].
       // Details are visible by default, not hidden behind dashboard accordions.
       for (const node of ledger.nodes) {
-        const row = el('div', undefined, 'activity-row'); row.dataset.nodeId = node.id;
-        const summary = el('p', undefined, 'activity-summary');
-        summary.append(el('span', node.kind, 'activity-kind'), el('span', ' » ', 'muted'), doc.createTextNode(node.label));
-        if (node.toolName) summary.append(el('span', ` [${node.toolName}]`, 'muted'));
-        row.append(summary);
-        if (node.detail) row.append(el('pre', actionDetail(node.detail, node.toolName), 'activity-detail'));
-        const edges = ledger.edges.filter((edge) => edge.from === node.id || edge.to === node.id);
-        if (edges.length || node.durationMs != null) {
-          const extra = el('div', undefined, 'activity-extra'); line(extra, `${node.kind} » ${node.label}`);
-          if (node.durationMs != null) fact(extra, 'Duration', `${node.durationMs} ms`);
-          if (edges.length) fact(extra, 'Recorded relationships', edges.map((edge) => `${edge.from} — ${edge.label} → ${edge.to}`).join('\n'));
-          if (node.detail) extra.append(el('pre', node.detail));
-          metadata.append(extra);
-        }
-        actions.append(row);
+        actions.append(activityRow(node));
+        const extra = ledgerNodeMetadata(node, ledger);
+        if (extra) metadata.append(extra);
       }
       if (metadata.childElementCount > 1) log.append(metadata);
     }
     if (!change.provenance.length) line(log, 'No recorded ledger returned.', 'muted');
-
+  }
+  function renderNotes(report: HTMLElement, change: ChangeEvidence, context: ReturnType<typeof renderFacts>, usage: ReturnType<typeof summarizeRecordedUsage>) {
+    const { intentContext, typedContext, legacyPlans, planId } = context;
     // Editor-only affordances stay secondary to the native report.
     const supplement = el('details', undefined, 'native-supplement'); supplement.append(el('summary', 'Plan, intent & verification notes')); report.append(supplement);
     const intentSection = section(supplement, 'Plan & intent', 'linked-intent');
@@ -149,7 +182,7 @@ export function mountAtomicGraph(root: HTMLElement, send: (message: unknown) => 
       fact(intentSection, 'Recorded source', `${binding.source} · session ${binding.sessionId}${binding.turnNumber != null ? ` · turn ${binding.turnNumber} (zero-based)` : ''}`, 'muted');
       fact(intentSection, 'Provenance', displayChangeHash(binding.provenanceHash), 'muted');
     }
-    for (const reference of references) {
+    for (const reference of intentReferences(change)) {
       const { id } = reference;
       const intent = state?.draft?.intents.find((item) => item.id === id);
       intentSection.append(el('h3', intent?.title || reference.identity?.title || id)); fact(intentSection, 'Intent', id);
@@ -162,8 +195,10 @@ export function mountAtomicGraph(root: HTMLElement, send: (message: unknown) => 
       let why = ''; try { if (intent?.body) why = readAtomicWhy(intent.body); } catch { /* Never infer rationale. */ }
       line(intentSection, why || 'Intent rationale unavailable.', 'intent-why');
       if (intent?.notice) line(intentSection, intent.notice, 'notice');
-      if (intent?.canOpenSource) intentSection.append(button('Open linked intent', () => send({ action: 'openIntent', id })), doc.createTextNode('  '));
-      if (intent) intentSection.append(button('Inspect stored attestation', () => send({ action: 'intent', id })));
+      const links = el('p', undefined, 'native-line supplement-actions');
+      if (intent?.canOpenSource) links.append(button('Open linked intent', () => send({ action: 'openIntent', id })), doc.createTextNode('  '));
+      if (intent) links.append(button('Inspect stored attestation', () => send({ action: 'intent', id })));
+      if (links.childElementCount) intentSection.append(links);
     }
     for (const association of typedContext?.associatedIntents.filter((item) => !item.intent) || []) fact(intentSection, 'Associated document', `${association.path} (current intent identity unavailable)`);
     if (intentContext) {
@@ -175,6 +210,24 @@ export function mountAtomicGraph(root: HTMLElement, send: (message: unknown) => 
     fact(notes, 'Signature', change.signature);
     line(notes, change.provenanceNotice, 'muted');
     usage.warnings.forEach((warning) => line(notes, warning, 'notice'));
+  }
+  function renderChange(change: ChangeEvidence) {
+    blast?.dispose(); main.replaceChildren(); status.hidden = true;
+    const owner = state;
+    renderHeading(change);
+    const report = el('article', undefined, 'change-detail'); main.append(report);
+    line(report, displayChangeHash(change.id), 'muted change-hash');
+    const context = renderFacts(report, change);
+    renderMessage(report, change.message);
+    const dependencies = el('section', undefined, 'native-section change-dependencies'); report.append(dependencies);
+    line(dependencies, `Dependencies: ${change.dependencies.length}`);
+    for (const hash of change.dependencies) line(dependencies, `${displayChangeHash(hash).slice(0, 12)}...`, 'native-indent dependency-hash');
+    renderFiles(report, change);
+    blast = mountBlastRadius(report, change, () => interactive && state === owner && selected === change,
+      (path) => send({ action: 'openDiff', id: change.id, path }));
+    const usage = renderAttestationSection(report, change);
+    renderLedger(report, change);
+    renderNotes(report, change, context, usage);
   }
   function renderAttestation(selection: Extract<EvidenceSelection, { kind: 'intent' }>) {
     main.querySelector('.stored-attestation')?.remove();
@@ -190,7 +243,8 @@ export function mountAtomicGraph(root: HTMLElement, send: (message: unknown) => 
     receive(event) {
       if (event.type === 'state') {
         state = event.state; selected = undefined; interactive = true; main.inert = false;
-        heading.textContent = `Atomic · ${state.view}`; status.textContent = `Inspecting only · working copy: ${state.workingCopyView}`;
+        heading.replaceChildren(el('strong', state.view, 'view-name'), el('span', ' · no change selected', 'muted'));
+        status.textContent = `Inspecting only · working copy: ${state.workingCopyView}`;
         empty('Expand this view in the left pane, then select a change hash.');
       } else if (event.type === 'selection') {
         if (!state) return;
@@ -217,6 +271,8 @@ function actionDetail(detail: string, tool?: string): string {
       const record = value as Record<string, unknown>;
       if (typeof record.command === 'string') return `$ ${record.command}`;
       if (typeof record.path === 'string') return `${tool === 'edit' ? 'edit: ' : ''}${record.path}`;
+      const files = record.files;
+      if (Array.isArray(files) && files.length && files.every((file) => typeof file === 'string')) return files.join('\n');
     }
   } catch { /* Plain-text details are already display-ready. */ }
   return detail;
