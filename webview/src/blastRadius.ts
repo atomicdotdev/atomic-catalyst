@@ -45,7 +45,7 @@ export function mountBlastRadius(parent: HTMLElement, change: ChangeEvidence, ac
         link.addEventListener('click', () => { if (!disposed && active()) openDiff(file.path); }); item.append(link);
       } else item.append(el('strong', file.path));
       const reasons = (impact?.edges || []).filter((edge) => edge.fromPath === file.path);
-      item.append(el('p', file.hop === 1 ? 'edited directly' : reasons.map((edge) => `${edge.relation === 'calls' ? 'calls' : 'imports'} ${edge.toPath}`).join('\n')));
+      item.append(el('p', file.hop === 1 ? 'edited directly' : reasons.map((edge) => `${edge.relation.toLowerCase() === 'calls' ? 'calls' : 'imports'} ${edge.toPath}`).join('\n')));
       list.append(item);
     }
     drill.append(list);
