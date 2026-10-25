@@ -56,7 +56,7 @@ describe('Recorded text diff snapshots', () => {
     ui.receive({ type: 'state', state: { view: 'main', workingCopyView: 'main' } });
     const change = { kind: 'change', id, message: 'Change', authors: [], dependencies: [], signature: 'unknown', provenance: [], provenanceNotice: '',
       affectedPaths: ['src/a.ts'], diffPaths: ['src/a.ts'], blastRadius: { mode: 'structural', context: 'Current KG', warnings: [],
-        files: [{ path: 'src/a.ts', hop: 1 }, { path: 'tests/a.ts', hop: 2 }], edges: [{ fromPath: 'tests/a.ts', toPath: 'src/a.ts', relation: 'CALLS' }] } };
+        files: [{ path: 'src/a.ts', hop: 1 }, { path: 'tests/a.ts', hop: 2 }], edges: [{ fromPath: 'tests/a.ts', toPath: 'src/a.ts', relation: 'calls' }] } };
     ui.receive({ type: 'selection', selection: change });
     const link = root.querySelector('button.impact-path'); link.click();
     expect(sent.at(-1)).toEqual({ action: 'openDiff', id, path: 'src/a.ts' });
