@@ -14,7 +14,7 @@ export type RecordedUsage = { index: number; vendor: string; model: string; mode
 export type ChangeGraphSummary = { verticesAdded: string; edgesChanged: string; contentBytes: string; filesChanged: string;
   files: { symbol: string; path: string; info: string }[] };
 export type BlastRadius = { mode: 'structural' | 'private' | 'partial' | 'unavailable';
-  files: { path: string; hop: 1 | 2 }[]; edges: { fromPath: string; toPath: string; relation: 'CALLS' | 'INCLUDES' }[];
+  files: { path: string; hop: 1 | 2 }[]; edges: { fromPath: string; toPath: string; relation: 'calls' | 'includes' }[];
   warnings: string[]; context: string };
 export type ChangeIntentIdentity = { id: string; uid: string; title: string; path: string };
 export type ChangeIntentContext = { status: 'recorded' | 'missing' | 'ambiguous' | 'partial' | 'unavailable'; planId?: string;

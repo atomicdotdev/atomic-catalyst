@@ -16,8 +16,8 @@ export function readChangeImpact(value: unknown, expectedHash: string): BlastRad
     });
     const edges = value.edges.map((edge) => {
       if (!object(edge) || typeof edge.fromPath !== 'string' || !paths.has(edge.fromPath) || typeof edge.toPath !== 'string' || paths.get(edge.toPath) !== 1 ||
-        (edge.relation !== 'CALLS' && edge.relation !== 'INCLUDES')) throw new Error('Invalid blast-radius edge');
-      return { fromPath: edge.fromPath, toPath: edge.toPath, relation: edge.relation as 'CALLS' | 'INCLUDES' };
+        (edge.relation !== 'calls' && edge.relation !== 'includes')) throw new Error('Invalid blast-radius edge');
+      return { fromPath: edge.fromPath, toPath: edge.toPath, relation: edge.relation as 'calls' | 'includes' };
     });
     if (files.some((file) => file.hop === 2 && !edges.some((edge) => edge.fromPath === file.path))) throw new Error('Indirect file lacks structural evidence');
     if (value.mode === 'private' && (files.some((file) => file.hop === 2) || edges.length || Array.isArray(value.warnings) && value.warnings.length)) throw new Error('Private-change claim contradicts structural evidence/coverage');
