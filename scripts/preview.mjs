@@ -16,7 +16,7 @@ const init = {
 };
 const payload = JSON.stringify(init).replaceAll('<', '\\u003c');
 const html = `<!doctype html>
-<html><head><meta charset="utf-8"><title>Catalyst Intent Editor — browser preview</title>
+<html><head><meta charset="utf-8"><title>Atomic Sherpa Intent Editor — browser preview</title>
 <link rel="stylesheet" href="/webview/index.css">
 <style>:root{--vscode-editor-background:#1e1e1e;--vscode-editor-foreground:#ddd;--vscode-sideBar-background:#252526;--vscode-panel-border:#444;--vscode-font-family:system-ui;--vscode-editor-font-family:monospace;--vscode-editor-font-size:14px;--vscode-editor-selectionBackground:#264f78;--vscode-focusBorder:#007fd4;--vscode-descriptionForeground:#aaa;--vscode-textLink-foreground:#75beff}body{overflow:hidden}</style>
 </head><body class="vscode-dark"><div id="app"></div>

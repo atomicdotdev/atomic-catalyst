@@ -9,9 +9,25 @@ import { validateUniversalContents, verifyUniversalVsix } from './verify-univers
 
 const tooling = createRequire(import.meta.resolve('@vscode/vsce'));
 const { ZipFile } = tooling('yazl');
-const pkg = { name: 'atomic-catalyst', displayName: 'Atomic Catalyst', publisher: 'atomicdotdev', version: '0.2.12', icon: 'flask.png' };
+const pkg = { name: 'atomic-sherpa', displayName: 'Atomic Sherpa', publisher: 'atomicdotdev', version: '0.2.12', icon: 'backpack.png' };
 const identity = { Id: pkg.name, Publisher: pkg.publisher, Version: pkg.version };
-const files = () => new Set(['extension/package.json', 'extension/dist/extension.js', 'extension/dist/nodeatomic/index.mjs', 'extension/flask.png']);
+const files = () => new Set(['extension/package.json', 'extension/dist/extension.js', 'extension/dist/nodeatomic/index.mjs', 'extension/backpack.png']);
+
+test('source manifest and lockfile use Atomic Sherpa branding and a packaged PNG icon', async () => {
+  const manifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+  const lock = JSON.parse(await readFile(new URL('../package-lock.json', import.meta.url), 'utf8'));
+  expect(manifest.name).toBe('atomic-sherpa');
+  expect(manifest.displayName).toBe('Atomic Sherpa');
+  expect(manifest.icon).toBe('backpack.png');
+  expect(lock.name).toBe(manifest.name);
+  expect(lock.packages[''].name).toBe(manifest.name);
+  const icon = await readFile(new URL(`../${manifest.icon}`, import.meta.url));
+  expect(icon.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+  const { listFiles } = tooling('@vscode/vsce');
+  expect(await listFiles({ packagedDependencies: [] })).toContain(manifest.icon);
+  expect(manifest.contributes.customEditors[0].viewType).toBe('catalystIntent.editor');
+  expect(manifest.contributes.configuration.properties['catalystIntent.useAsDefault']).toBeDefined();
+});
 
 test('accepts an untargeted universal JS-only payload', () => {
   expect(() => validateUniversalContents(files(), identity, pkg)).not.toThrow();
@@ -72,7 +88,7 @@ test('verifies an archive and smoke-tests its extracted standalone JS consumer',
     zip.addBuffer(Buffer.from(`<PackageManifest><Metadata><Identity Id="${pkg.name}" Publisher="${pkg.publisher}" Version="${pkg.version}"/></Metadata></PackageManifest>`), 'extension.vsixmanifest');
     zip.addBuffer(Buffer.from(JSON.stringify(pkg)), 'extension/package.json');
     zip.addBuffer(Buffer.from('extension entry'), 'extension/dist/extension.js');
-    zip.addBuffer(Buffer.from('icon fixture'), 'extension/flask.png');
+    zip.addBuffer(Buffer.from('icon fixture'), 'extension/backpack.png');
     zip.addBuffer(Buffer.from(`
       // Fixture for archive mechanics: ATOMIC_RUNTIME_DIR ATOMIC_RUNTIME_CONTRACT dlopen
       export class AtomicRuntimeError extends Error { constructor() { super('Missing runtime'); this.code = 'ATOMIC_RUNTIME_NOT_FOUND'; } }

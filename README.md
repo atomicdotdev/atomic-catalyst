@@ -1,4 +1,6 @@
-# Atomic Catalyst
+# Atomic Sherpa
+
+<img src="backpack.png" alt="Atomic Sherpa backpack" width="128">
 
 Connect **intent to source code** in VS Code-compatible editors: edit Atomic intent tickets, review source changes and history, manage **Draft and Shared views**, and explore the **blast radius** of code changes through file, caller, and importer relationships.
 
@@ -16,11 +18,11 @@ Local packages are written to `releases/`. Use the version confirmed by the buil
 2. Run **Extensions: Install from VSIX…** and select that file.
 3. Reload the editor window if prompted.
 4. Open a vault `intent.md` or `*.intent.md` file. These filenames now default to **Atomic Intent Ticket**.
-5. If a file is already open in a text editor or Markdown Preview, close that preview and use **Reopen Editor With… → Atomic Intent Ticket** (or **Catalyst Intent Editor**). You can also run **Atomic: Open Intent as Ticket**.
+5. If a file is already open in a text editor or Markdown Preview, close that preview and use **Reopen Editor With… → Atomic Intent Ticket** (or **Atomic Sherpa Intent Editor**). You can also run **Atomic: Open Intent as Ticket**.
 
 **Do not choose Markdown Preview.** It is the editor's generic read-only Markdown renderer and cannot display Atomic ticket fields.
 
-The extension requires VS Code API 1.97+. Editor command, setting, and custom-editor IDs use `catalystIntent.*`; version control commands use `catalystAtomic.*`. These no longer collide with the original MEO extension. Ordinary Markdown keeps its current editor unless you explicitly choose Catalyst Intent Editor.
+The extension package is `atomic-sherpa` (extension ID `atomicdotdev.atomic-sherpa`) and requires VS Code API 1.97+. Editor command, setting, and custom-editor IDs retain `catalystIntent.*`; version control commands retain `catalystAtomic.*` for compatibility with existing configurations. These do not collide with the original MEO extension. Ordinary Markdown keeps its current editor unless you explicitly choose Atomic Sherpa Intent Editor.
 
 ## Ticket layout
 
@@ -61,12 +63,12 @@ Expand a view in the left **Views** tree and click a change hash. Hashes use Ato
 - **Structural coverage:** opt-in native `GetChange.blastRadius` compares recorded before/after sources, including deleted code, and follows incoming current-KG `CALLS`/`INCLUDES`. It does not read unsaved/working-copy sources or automatically enrich the KG. This is a **current repository KG observation, not a historical or view-isolated dependency snapshot**. Unsupported languages, missing content/definitions and bounded analysis are marked partial. An absent result is marked unavailable, never mislabeled a private change or zero impact. See **Analysis coverage** for details.
 - **Recorded actions:** the full bounded ledger stays in recorded order with original kind names and visible command/path previews. Relationship, duration and raw payload details are secondary under **Recorded ledger metadata**; actions are not paged or hidden behind individual disclosures.
 - **Attestation evidence:** historical signature validity, source freshness, unknown signer trust and editor-buffer comparison remain separate from link checks and SHACL validation.
-- **Metadata boundary:** libatomic projects safe fields from the canonical Rust-loaded change and retains the V3 bundle. nodeatomic generates the updated types from that addon's descriptor. Catalyst validates the metadata's schema and change hash and sends decimal-string counters, not binary bundles, prompts or reasoning text, into the webview. Graph counters preserve uint64 precision; BigInt arithmetic preserves token and currency precision.
+- **Metadata boundary:** libatomic projects safe fields from the canonical Rust-loaded change and retains the V3 bundle. nodeatomic generates the updated types from that addon's descriptor. Atomic Sherpa validates the metadata's schema and change hash and sends decimal-string counters, not binary bundles, prompts or reasoning text, into the webview. Graph counters preserve uint64 precision; BigInt arithmetic preserves token and currency precision.
 - **Exact signed document:** opens the backend's exact stored signed JSON-LD in a frozen, script-free viewer, never mutable editor text. Already-open snapshots remain unchanged by later navigation or refresh.
 
 All detail reads use the packaged in-process consumer. Webview actions and intent source paths are allowlisted, and later navigation/refresh fences stale results. No CLI subprocess, private-key access, direct database parsing, automatic repair or filesystem fallback is used for evidence reads. Ticket attestation badges remain separate work.
 
-The native-field development path is **Atomic/libatomic → nodeatomic → Catalyst**: add the decoded projection in the producer, explicitly build/install its addon in nodeatomic, regenerate nodeatomic's codecs/types from the embedded descriptor, then rebuild Catalyst's consumer/runtime. Missing fields should be exposed along that chain, not decoded from the V3 bundle in JavaScript. Consumer build scripts do not compile or discover the producer. Restart the development extension host after updating its native runtime.
+The native-field development path is **Atomic/libatomic → nodeatomic → Atomic Sherpa**: add the decoded projection in the producer, explicitly build/install its addon in nodeatomic, regenerate nodeatomic's codecs/types from the embedded descriptor, then rebuild Atomic Sherpa's consumer/runtime. Missing fields should be exposed along that chain, not decoded from the V3 bundle in JavaScript. Consumer build scripts do not compile or discover the producer. Restart the development extension host after updating its native runtime.
 
 ### “Repository upgrade required” on an existing repository
 
@@ -86,7 +88,7 @@ There is no daemon startup, CLI subprocess for repository operations, socket, di
 
 ## Develop and package
 
-Build requirements: Node.js 22+/npm (for VSCE 4), Bun, a VS Code-compatible editor, and a **previously built universal nodeatomic JavaScript consumer**. The current development dependency is `file:../nodeatomic`; build that project independently using its README first. Its compiled codecs/fingerprint are bundled, so the resulting VSIX does not need that checkout. Catalyst never builds Rust or searches for Atomic producer sources. Building/packaging does not require a native library unless an explicit runtime override requests the native smoke.
+Build requirements: Node.js 22+/npm (for VSCE 4), Bun, a VS Code-compatible editor, and a **previously built universal nodeatomic JavaScript consumer**. The current development dependency is `file:../nodeatomic`; build that project independently using its README first. Its compiled codecs/fingerprint are bundled, so the resulting VSIX does not need that checkout. Atomic Sherpa never builds Rust or searches for Atomic producer sources. Building/packaging does not require a native library unless an explicit runtime override requests the native smoke.
 
 ```sh
 npm ci

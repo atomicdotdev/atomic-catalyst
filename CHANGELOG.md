@@ -1,4 +1,8 @@
-# Atomic Catalyst
+# Atomic Sherpa
+
+## Unreleased
+- Rename the extension to Atomic Sherpa (`atomic-sherpa`) and use the backpack artwork as its icon.
+- Update intent-editor labels and settings descriptions while preserving existing command, setting, and editor IDs.
 
 ## 0.2.12
 - Package one universal, JavaScript-only VSIX; Atomic's platform library is supplied by the separate Atomic installation on the extension host.

@@ -1,12 +1,12 @@
 {
-  "name": "atomic-catalyst",
-  "displayName": "Atomic Catalyst",
+  "name": "atomic-sherpa",
+  "displayName": "Atomic Sherpa",
   "description": "Connect intent to source code with Atomic: edit intent tickets, manage Draft and Shared views, inspect change history, and explore code blast radius.",
   "version": "0.2.12",
   "publisher": "atomicdotdev",
   "license": "MIT",
   "private": true,
-  "icon": "flask.png",
+  "icon": "backpack.png",
   "engines": {
     "vscode": "^1.97.0"
   },
@@ -48,7 +48,7 @@
         {
           "id": "catalystAtomic.repository",
           "name": "Atomic History & Views",
-          "icon": "flask"
+          "icon": "backpack.png"
         }
       ]
     },
@@ -76,48 +76,48 @@
       },
       {
         "command": "catalystIntent.setDefaultEditor",
-        "title": "Catalyst Intent Editor: Set as Default",
+        "title": "Atomic Sherpa Intent Editor: Set as Default",
         "icon": "$(check)"
       },
       {
         "command": "catalystIntent.resetThemeToDefault",
-        "title": "Catalyst Intent Editor: Reset Theme to Default",
+        "title": "Atomic Sherpa Intent Editor: Reset Theme to Default",
         "icon": "$(discard)"
       },
       {
         "command": "catalystIntent.selectTheme",
-        "title": "Catalyst Intent Editor: Select Theme"
+        "title": "Atomic Sherpa Intent Editor: Select Theme"
       },
       {
         "command": "catalystIntent.importTheme",
-        "title": "Catalyst Intent Editor: Import Theme JSON"
+        "title": "Atomic Sherpa Intent Editor: Import Theme JSON"
       },
       {
         "command": "catalystIntent.exportTheme",
-        "title": "Catalyst Intent Editor: Export Theme JSON"
+        "title": "Atomic Sherpa Intent Editor: Export Theme JSON"
       },
       {
         "command": "catalystIntent.deleteImportedTheme",
-        "title": "Catalyst Intent Editor: Delete Imported Theme"
+        "title": "Atomic Sherpa Intent Editor: Delete Imported Theme"
       },
       {
         "command": "catalystIntent.toggleMode",
-        "title": "Catalyst Intent Editor: Toggle Ticket/Source Mode",
+        "title": "Atomic Sherpa Intent Editor: Toggle Ticket/Source Mode",
         "icon": "$(sync)"
       },
       {
         "command": "catalystIntent.toggleReadOnly",
-        "title": "Catalyst Intent Editor: Toggle Read Only",
+        "title": "Atomic Sherpa Intent Editor: Toggle Read Only",
         "icon": "$(book)"
       },
       {
         "command": "catalystIntent.exportHtml",
-        "title": "Catalyst Intent Editor: Export as HTML",
+        "title": "Atomic Sherpa Intent Editor: Export as HTML",
         "icon": "$(export)"
       },
       {
         "command": "catalystIntent.exportPdf",
-        "title": "Catalyst Intent Editor: Export as PDF",
+        "title": "Atomic Sherpa Intent Editor: Export as PDF",
         "icon": "$(file-pdf)"
       }
     ],
@@ -131,7 +131,7 @@
     "customEditors": [
       {
         "viewType": "catalystIntent.editor",
-        "displayName": "Catalyst Intent Editor",
+        "displayName": "Atomic Sherpa Intent Editor",
         "selector": [
           {
             "filenamePattern": "*.md"
@@ -198,13 +198,13 @@
       ]
     },
     "configuration": {
-      "title": "Catalyst Intent Editor",
+      "title": "Atomic Sherpa Intent Editor",
       "properties": {
         "catalystIntent.useAsDefault": {
           "type": "boolean",
           "default": false,
           "order": 1,
-          "description": "Use atomic-catalyst as the default editor for Markdown files"
+          "description": "Use Atomic Sherpa as the default editor for Markdown files"
         },
         "catalystIntent.outline.position": {
           "type": "string",
@@ -225,7 +225,7 @@
           "default": false,
           "scope": "application",
           "order": 3,
-          "description": "Make all atomic-catalyst documents read-only in Live and Source. Remembered across editor sessions and workspaces."
+          "description": "Make all Atomic Sherpa documents read-only in Live and Source. Remembered across editor sessions and workspaces."
         },
         "catalystIntent.contentMaxWidth.visible": {
           "type": "boolean",
@@ -255,7 +255,7 @@
           "type": "boolean",
           "default": true,
           "order": 6,
-          "description": "Show built-in spelling diagnostics in atomic-catalyst when no external spell checker diagnostics are available."
+          "description": "Show built-in spelling diagnostics in Atomic Sherpa when no external spell checker diagnostics are available."
         },
         "catalystIntent.vimMode.enabled": {
           "type": "boolean",
@@ -274,8 +274,8 @@
           ],
           "enumDescriptions": [
             "Enable Vim emulation automatically when VSCodeVim (vscodevim.vim) is installed and enabled, or when VSCode Neovim (asvetliakov.vscode-neovim) is installed.",
-            "Always enable Vim emulation in atomic-catalyst.",
-            "Always disable Vim keybindings in atomic-catalyst."
+            "Always enable Vim emulation in Atomic Sherpa.",
+            "Always disable Vim keybindings in Atomic Sherpa."
           ],
           "default": "auto",
           "order": 6,
