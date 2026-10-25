@@ -1,26 +1,26 @@
 ---
 intentId: CATA::continuouslee::10
-sourceContentHash: blake3:1aacab8523bf7f828094b69438ab2e815f600b4bec38465ece7ca34912e3af16
+sourceContentHash: blake3:b7f31132f9b1bd6605d498805217528808caa7e432f643f294e12635bd388757
 entry_type: attestation
-content_hash: RUYCGF5MAQOTJEBCRNM72LNB4IGCLORLNVNB47SRUOQG5WF3LVKQ
-created_at: 2026-10-25T11:57:39.461863+00:00
-updated_at: 2026-10-25T11:57:39.461863+00:00
+content_hash: ZDOAJPWI5R7ZFLBLR3DRUCD3HQECHLYILD4POM27YQDWJ4ABLRYQ
+created_at: 2026-10-25T12:01:09.319576+00:00
+updated_at: 2026-10-25T12:01:09.319576+00:00
 ---
 {
   "@context": "https://atomic.dev/ns/ctx.jsonld",
   "@id": "urn:atomic:intent:01M5SEMGH89WD3V9TXJ5JANTW9",
   "@type": "Intent",
   "attributedTo": "did:atomic:U4NNGFTE7KZZKRML6TQDBJJMOMKDCEHZO64IKHGACVRYGZOQSH5Q",
-  "contentHash": "blake3:80d914f3a07ca7d7ab3f7cce6a9a7d9723792f7ac6dfa973a6f93548a92e7083",
+  "contentHash": "blake3:c2552cb4650d5293fb3bb87e732f239f291ee2bc313776b5c9e5781834a22570",
   "createdAt": "",
   "hasAcceptanceCriterion": [
     {
       "@id": "urn:atomic:ac:01M5SEMGH89WD3V9TXJ5JANTW9-ac-1",
       "@type": "AcceptanceCriterion",
       "acStatus": "met",
-      "evidence": "bun test scripts/universalVsix.test.mjs: 6 pass, 0 fail; cmp confirms backpack.png matches Downloads source exactly. Full suite: 164 pass, 4 failures in untouched atomicBlastRadius tests. No release archive built or published.",
+      "evidence": "bun test scripts/universalVsix.test.mjs: 7 pass, 0 fail, including real README processing without repository metadata. Removed the relative README image that broke VSCE; backpack remains the extension icon. node scripts/package-universal.mjs produced and verified releases/atomic-sherpa-0.2.12.vsix, including extracted consumer and installed native dispatch. Earlier full suite: 164 pass, 4 failures in untouched atomicBlastRadius tests. No publication.",
       "text": "Manifest and lockfile identify atomic-sherpa / Atomic Sherpa; current editor labels and documentation reflect the rename; the manifest icon is an exact copy of the supplied backpack PNG. Packaging regression tests pass and existing command/settings/editor IDs remain stable.",
-      "verifiedBy": "Bun packaging regression tests and byte comparison"
+      "verifiedBy": "Bun packaging regression tests, byte comparison and VSCE"
     }
   ],
   "hasConstraint": [
@@ -41,7 +41,7 @@ updated_at: 2026-10-25T11:57:39.461863+00:00
     {
       "@id": "urn:atomic:scope:01m5semgh89wd3v9txj5jantw9-scope-out-1",
       "@type": "ScopeItem",
-      "text": "Historical signed vault records, upstream attribution, desktop Catalyst fixture, runtime behavior, publishing and release builds."
+      "text": "Historical signed vault records, upstream attribution, desktop Catalyst fixture, runtime behavior and publishing. Packaging existing build artifacts is allowed to verify the reported README packaging failure."
     }
   ],
   "hasTask": [
@@ -67,7 +67,7 @@ updated_at: 2026-10-25T11:57:39.461863+00:00
     "@type": "DataIntegrityProof",
     "cryptosuite": "eddsa-jcs-2022",
     "proofPurpose": "assertionMethod",
-    "proofValue": "z2P2QTB99iSudt6fvCL5PVqjh2Ed9EGzY4SDV7d49Qf4myoSrXMRiPkRa2AZcii2jVMqSvW8XKDekJ1q8jsnx4BTw",
+    "proofValue": "zpJJAJRG3BF213MPwrz8Xj2H3g9YwyfP2g3fS4bmC3U9krVbrh5Gaqkd7Czd7ZQkNAyzM3YSigGdzygT8yX3woD2",
     "verificationMethod": "did:atomic:U4NNGFTE7KZZKRML6TQDBJJMOMKDCEHZO64IKHGACVRYGZOQSH5Q#key-1"
   },
   "status": "in_progress",

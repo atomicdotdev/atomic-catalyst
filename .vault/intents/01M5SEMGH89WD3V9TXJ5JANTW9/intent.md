@@ -11,15 +11,15 @@ title: Rename extension to Atomic Sherpa and adopt backpack icon
 uid: 01M5SEMGH89WD3V9TXJ5JANTW9
 view: withered-silence-019a
 entry_type: intent
-content_hash: NMZ6AMXGFMJXEDQXFCIFLD5JXEHELIPTEUA24OZIMGU3HS4IBGIA
-created_at: 2026-10-25T11:57:46.627227+00:00
-updated_at: 2026-10-25T11:57:46.627227+00:00
+content_hash: 4PJQ4ZSKRL3KP6XY7KGJARVJFUBBADV2DDGNKHSZWVLUP6RRAK7A
+created_at: 2026-10-25T12:01:16.663114+00:00
+updated_at: 2026-10-25T12:01:16.663114+00:00
 ---
 :::why
 The user wants the plugin branded Atomic Sherpa (atomic-sherpa) using their Downloads/backpack.png image.
 :::
 
-:::acceptance-criterion{#01M5SEMGH89WD3V9TXJ5JANTW9-ac-1 status=met verifiedBy="Bun packaging regression tests and byte comparison" evidence="bun test scripts/universalVsix.test.mjs: 6 pass, 0 fail; cmp confirms backpack.png matches Downloads source exactly. Full suite: 164 pass, 4 failures in untouched atomicBlastRadius tests. No release archive built or published."}
+:::acceptance-criterion{#01M5SEMGH89WD3V9TXJ5JANTW9-ac-1 status=met verifiedBy="Bun packaging regression tests, byte comparison and VSCE" evidence="bun test scripts/universalVsix.test.mjs: 7 pass, 0 fail, including real README processing without repository metadata. Removed the relative README image that broke VSCE; backpack remains the extension icon. node scripts/package-universal.mjs produced and verified releases/atomic-sherpa-0.2.12.vsix, including extracted consumer and installed native dispatch. Earlier full suite: 164 pass, 4 failures in untouched atomicBlastRadius tests. No publication."}
 Manifest and lockfile identify atomic-sherpa / Atomic Sherpa; current editor labels and documentation reflect the rename; the manifest icon is an exact copy of the supplied backpack PNG. Packaging regression tests pass and existing command/settings/editor IDs remain stable.
 :::
 
@@ -36,7 +36,7 @@ Current extension identity, visible editor labels, browser preview title, docume
 :::
 
 :::scope-out
-Historical signed vault records, upstream attribution, desktop Catalyst fixture, runtime behavior, publishing and release builds.
+Historical signed vault records, upstream attribution, desktop Catalyst fixture, runtime behavior and publishing. Packaging existing build artifacts is allowed to verify the reported README packaging failure.
 :::
 
 :::constraint

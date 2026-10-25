@@ -29,6 +29,23 @@ test('source manifest and lockfile use Atomic Sherpa branding and a packaged PNG
   expect(manifest.contributes.configuration.properties['catalystIntent.useAsDefault']).toBeDefined();
 });
 
+test('VSCE packages the actual README without a repository URL', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'sherpa-readme-'));
+  try {
+    await writeFile(join(root, 'package.json'), JSON.stringify({ ...pkg, engines: { vscode: '^1.97.0' } }));
+    for (const name of ['README.md', 'CHANGELOG.md', 'LICENSE', pkg.icon]) {
+      await writeFile(join(root, name), await readFile(new URL(`../${name}`, import.meta.url)));
+    }
+    const source = `
+      const { createVSIX } = require(${JSON.stringify(tooling.resolve('@vscode/vsce'))});
+      createVSIX({ packagePath: ${JSON.stringify(join(root, 'test.vsix'))}, dependencies: false, allowMissingRepository: true })
+        .catch(error => { console.error(error); process.exitCode = 1; });
+    `;
+    execFileSync('node', ['-e', source], { cwd: root, encoding: 'utf8' });
+    expect((await readFile(join(root, 'test.vsix'))).length).toBeGreaterThan(0);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
 test('accepts an untargeted universal JS-only payload', () => {
   expect(() => validateUniversalContents(files(), identity, pkg)).not.toThrow();
   expect(() => validateUniversalContents(files(), { ...identity, TargetPlatform: 'universal' }, pkg)).not.toThrow();

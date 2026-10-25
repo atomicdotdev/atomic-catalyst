@@ -1,7 +1,5 @@
 # Atomic Sherpa
 
-<img src="backpack.png" alt="Atomic Sherpa backpack" width="128">
-
 Connect **intent to source code** in VS Code-compatible editors: edit Atomic intent tickets, review source changes and history, manage **Draft and Shared views**, and explore the **blast radius** of code changes through file, caller, and importer relationships.
 
 The intent editor is built on the MIT-licensed [Markdown Editor Optimized (MEO)](https://github.com/vadimmelnicuk/meo) foundation.
