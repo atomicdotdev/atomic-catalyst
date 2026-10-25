@@ -31,7 +31,7 @@ const makeDetail = (index) => {
        associatedIntents: [], warnings: [], validationStatus: 'not_checked', context: 'Recorded declarations; current vault metadata; no validation performed.' },
      blastRadius: { changeHash: { value: bytes(index) }, mode: 'structural', context: 'Recorded sources + current repository KG; not a historical view snapshot.', warnings: [],
        files: [{ path: files[index - 1], hop: 1 }, { path: 'tests/caller.ts', hop: 2 }],
-       edges: [{ fromPath: 'tests/caller.ts', toPath: files[index - 1], relation: 'CALLS' }] },
+       edges: [{ fromPath: 'tests/caller.ts', toPath: files[index - 1], relation: 'calls' }] },
      metadata: { schemaVersion: 1, changeHash: { value: bytes(index) }, affectedPaths: [files[index - 1]], warnings: [],
        graphSummary: { verticesAdded: '3', edgesChanged: '0', contentBytes: '24', filesChanged: '1',
          files: [{ symbol: '+', path: files[index - 1], info: '(+3 vertices: name, inode, content)' }] },

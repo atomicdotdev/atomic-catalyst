@@ -6,7 +6,7 @@ const bytes = new Uint8Array(32).fill(4), hash = Buffer.from(bytes).toString('he
 const fixture = () => ({ changeHash: { value: bytes }, mode: 'structural', context: 'Recorded sources + current repository KG; not a historical view snapshot.', warnings: [],
   files: [{ path: 'src/api.ts', hop: 1 }, { path: '.vault/a.md', hop: 1 }, { path: '.vault/b.md', hop: 1 },
     { path: 'package.json', hop: 1 }, { path: 'tests/api.ts', hop: 2 }, { path: 'src/ui.ts', hop: 2 }],
-  edges: [{ fromPath: 'tests/api.ts', toPath: 'src/api.ts', relation: 'CALLS' }, { fromPath: 'src/ui.ts', toPath: 'src/api.ts', relation: 'INCLUDES' }] });
+  edges: [{ fromPath: 'tests/api.ts', toPath: 'src/api.ts', relation: 'calls' }, { fromPath: 'src/ui.ts', toPath: 'src/api.ts', relation: 'includes' }] });
 const change = (impact = fixture()) => ({ kind: 'change', id: hash, message: 'Selected change', authors: [], dependencies: [], signature: 'not verified', provenance: [], provenanceNotice: 'Recorded attribution.',
   affectedPaths: fixture().files.filter((file) => file.hop === 1).map((file) => file.path), blastRadius: readChangeImpact(impact, hash) });
 
